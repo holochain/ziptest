@@ -1,0 +1,25 @@
+---
+manifest_version: "1"
+name: ziptest
+
+integrity:
+  network_seed: ~
+  properties:
+    type: "ZipTest"
+  origin_time: 2024-06-21T00:00:00.0Z
+  zomes:
+    - name: ziptest_integrity
+      bundled: ../../../target/wasm32-unknown-unknown/release/ziptest_integrity.wasm
+    - name: profiles_integrity
+      bundled: ../../../target/wasm32-unknown-unknown/release/profiles_integrity.wasm
+
+coordinator:
+  zomes:
+    - name: ziptest
+      bundled: ../../../target/wasm32-unknown-unknown/release/ziptest.wasm
+      dependencies:
+        - name: profiles_integrity
+    - name: profiles
+      bundled: ../../../target/wasm32-unknown-unknown/release/profiles.wasm
+      dependencies:
+        - name: profiles_integrity
