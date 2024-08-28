@@ -50,6 +50,7 @@ export class ZipTestClient extends ZomeClient<ZipTestSignal> {
     }
 
     async sendMessage(streamId: string, payload: Payload, agents: AgentPubKey[]) {
+        console.log("Sending", payload, "to", agents.map(agent=>encodeHashToBase64(agent)))
         await this.callZome('send_message', {
             streamId,
             content: JSON.stringify(payload), 
@@ -122,7 +123,6 @@ export class ZipTestStore {
     });
 
     async sendMessage(streamId: string, payload: Payload, agents: AgentPubKey[]) {
-        console.log("Sending Message to", agents.map(agent=>encodeHashToBase64(agent)))
         this.addMessageToStream(streamId, {payload, from:this.myAgentPubKey, received:Date.now() })
         for (const agent of agents) {
             let messageList:Array<number> = this.expectations.get(agent)
@@ -165,10 +165,10 @@ export class ZipTestStore {
             stream = this.newStream(streamId)
         }
 
-        stream.addMessage(message)
+        const firstAdd = stream.addMessage(message)
         if (message.payload.type == "Msg") {
-            if (isWeContext()) {
-                this.weaveClient.notifyFrame([
+            if (firstAdd && isWeContext()) {
+                await this.weaveClient.notifyFrame([
                     {
                         title: `message from ${encodeHashToBase64(message.from)}`,
                         body: message.payload.text,
@@ -225,18 +225,18 @@ export class ZipTestStore {
                     }
                     // we just received a message from someone who we are expecting
                     // to have acked something but they haven't so we retry to send the message
-                    if (messageList.length > 0) {
-                        const streams = Object.values(get(this.streams))
-                        for (const msgId of messageList) {
-                            for (const stream of streams) {
-                                const msg = stream.findMessage(msgId)
-                                if (msg) {
-                                    console.log("Resending", msg)
-                                    await this.client.sendMessage(stream.id, msg.payload, [message.from])
-                                }
-                            }
-                        }
-                    }
+                    // if (messageList.length > 0) {
+                    //     const streams = Object.values(get(this.streams))
+                    //     for (const msgId of messageList) {
+                    //         for (const stream of streams) {
+                    //             const msg = stream.findMessage(msgId)
+                    //             if (msg) {
+                    //                 console.log("Resending", msg)
+                    //                 await this.client.sendMessage(stream.id, msg.payload, [message.from])
+                    //             }
+                    //         }
+                    //     }
+                    // }
                 }
             }
 

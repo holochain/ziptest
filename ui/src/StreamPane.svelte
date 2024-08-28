@@ -76,7 +76,7 @@
     let count = parseInt(inputCountElement.value)
     let delay = parseInt(inputDelayElement.value)
     setTimeout(() => {
-      _sendMessage()
+      _sendMessage(inputCountElement.value)
       count-=1
       inputCountElement.value = `${count}`
       if (count>0) {
@@ -84,10 +84,10 @@
       }
     }, delay);
   }
-  const _sendMessage = async () => {
+  const _sendMessage = async (text) => {
     const payload: Payload = {
       type: "Msg",
-      text: inputElement.value,
+      text,
       created: Date.now(),
     }
     console.log("SENDING TO",hashes)
@@ -267,16 +267,16 @@
       label="Delay"
     ></sl-input>
     <sl-input
-      style="width:100%"
+      style="width:300px"
       bind:this={inputElement}
       on:sl-input={(e) => (disabled = !e.target.value || !inputElement.value)}
       on:keydown={(e) => {
         if (e.keyCode == 13) {
-          sendMessage();
+          _sendMessage(inputElement.value);
           e.stopPropagation();
         }
       }}
-      placeholder="Message"
+      label="Message"
     ></sl-input>
 
     <sl-button
