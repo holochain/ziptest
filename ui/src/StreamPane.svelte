@@ -1,6 +1,11 @@
 <script lang="ts">
   import "@shoelace-style/shoelace/dist/components/button/button.js";
-  import { createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
+  import {
+    createEventDispatcher,
+    getContext,
+    onDestroy,
+    onMount,
+  } from "svelte";
   import { get } from "svelte/store";
   import SvgIcon from "./SvgIcon.svelte";
   import Confirm from "./Confirm.svelte";
@@ -10,7 +15,7 @@
   import type { Stream, Payload, Message } from "./stream";
   import type { AgentPubKey } from "@holochain/client";
   import { HoloHashMap } from "@holochain-open-dev/utils";
-	import { debounce } from 'lodash-es';
+  import { debounce } from "lodash-es";
 
   const { getStore }: any = getContext("store");
   const store: ZipTestStore = getStore();
@@ -23,74 +28,80 @@
   const dispatch = createEventDispatcher();
 
   const walToPocket = () => {
-    const nullHash = new Uint8Array(39)
-    const attachment: WAL = { hrl: [store.dnaHash, nullHash], context: stream.id }
-    store.weaveClient?.walToPocket(attachment)
-  }
+    const nullHash = new Uint8Array(39);
+    const attachment: WAL = {
+      hrl: [store.dnaHash, nullHash],
+      context: stream.id,
+    };
+    store.weaveClient?.walToPocket(attachment);
+  };
   const SCROLL_THRESHOLD = 100; // How close to the bottom must the user be to consider it "at the bottom"
 
   type Results = {
-    count: number,
-    acks: number
-  }
+    count: number;
+    acks: number;
+  };
 
   //@ts-ignore
   $: myProfile = get(store.profilesStore.myProfile).value;
 
   onMount(async () => {
-    conversationContainer.addEventListener('scroll', handleScroll);
+    conversationContainer.addEventListener("scroll", handleScroll);
   });
   onDestroy(() => {
-    conversationContainer.removeEventListener('scroll', handleScroll);
-  })
+    conversationContainer.removeEventListener("scroll", handleScroll);
+  });
 
-  const getSources = (messages:Message[],acks: {[key: number]:HoloHashMap<AgentPubKey,boolean>}) => {
-    const sources:HoloHashMap<AgentPubKey, Results> = new HoloHashMap()
+  const getSources = (
+    messages: Message[],
+    acks: { [key: number]: HoloHashMap<AgentPubKey, boolean> }
+  ) => {
+    const sources: HoloHashMap<AgentPubKey, Results> = new HoloHashMap();
 
-    messages.forEach((m)=>{
-      const fromB6 = encodeHashToBase64(m.from)
-      const r = sources.get(m.from)
-      const results:Results = r ? r: {count:1, acks:0}
+    messages.forEach((m) => {
+      const fromB6 = encodeHashToBase64(m.from);
+      const r = sources.get(m.from);
+      const results: Results = r ? r : { count: 1, acks: 0 };
       if (r) {
-        results.count+= 1
+        results.count += 1;
       }
       if (fromB6 == store.myAgentPubKeyB64) {
-        results.acks += getAckCount(acks, m.payload.created)
+        results.acks += getAckCount(acks, m.payload.created);
       }
-      sources.set(m.from, results)
-    })
-    return sources
-  }
+      sources.set(m.from, results);
+    });
+    return sources;
+  };
 
   $: messages = stream.messages;
   $: acks = stream.acks;
-  $: sources = getSources($messages,$acks)
+  $: sources = getSources($messages, $acks);
   $: lastSeen = store.lastSeen;
   $: agentActive = store.agentActive;
 
   let inputElement;
   let inputCountElement;
-  let inputDelayElement
+  let inputDelayElement;
   let disabled;
   const sendMessage = async () => {
-    let count = parseInt(inputCountElement.value)
-    let delay = parseInt(inputDelayElement.value)
+    let count = parseInt(inputCountElement.value);
+    let delay = parseInt(inputDelayElement.value);
     setTimeout(() => {
-      _sendMessage(inputCountElement.value)
-      count-=1
-      inputCountElement.value = `${count}`
-      if (count>0) {
-        sendMessage()
+      _sendMessage(inputCountElement.value);
+      count -= 1;
+      inputCountElement.value = `${count}`;
+      if (count > 0) {
+        sendMessage();
       }
     }, delay);
-  }
+  };
   const _sendMessage = async (text) => {
     const payload: Payload = {
       type: "Msg",
       text,
       created: Date.now(),
-    }
-    console.log("SENDING TO",hashes)
+    };
+    console.log("SENDING TO", hashes);
     await store.sendMessage(stream.id, payload, hashes);
     inputElement.value = "";
   };
@@ -119,27 +130,29 @@
 
   let conversationContainer: HTMLElement;
 
-  let scrollAtBottom = true
-    // Reactive update to scroll to the bottom every time the messages update,
+  let scrollAtBottom = true;
+  // Reactive update to scroll to the bottom every time the messages update,
   // but only if the user is near the bottom already
   $: if ($messages && $messages.length > 0) {
     if (scrollAtBottom) {
       setTimeout(scrollToBottom, 100);
     }
-  };
+  }
 
   const handleScroll = debounce(() => {
-    scrollAtBottom = conversationContainer.scrollHeight - conversationContainer.scrollTop <= conversationContainer.clientHeight + SCROLL_THRESHOLD;
-  }, 100)
+    scrollAtBottom =
+      conversationContainer.scrollHeight - conversationContainer.scrollTop <=
+      conversationContainer.clientHeight + SCROLL_THRESHOLD;
+  }, 100);
 
   function scrollToBottom() {
     if (conversationContainer) {
       conversationContainer.scrollTop = conversationContainer.scrollHeight;
-      scrollAtBottom = true
+      scrollAtBottom = true;
     }
   }
 
-  let showRecipients = 0
+  let showRecipients = 0;
 </script>
 
 <Confirm
@@ -153,22 +166,25 @@
   <div class="header">
     <div>
       <span>Total Messages: {$messages.length}</span>
-      {#each Array.from(sources.entries()) as [key,results]}
-      {@const key64 = encodeHashToBase64(key)}
-      <div style="display:flex">
-        <agent-avatar
-                    style="margin-right: 2px; margin-bottom: 2px;"
-                    size={18}
-                    agent-pub-key={key64}
-                  ></agent-avatar>
-        {results.count} {#if key64 == store.myAgentPubKeyB64} acks: {results.acks} {/if}
-      </div>
-    {/each}
+      {#each Array.from(sources.entries()) as [key, results]}
+        {@const key64 = encodeHashToBase64(key)}
+        <div style="display:flex">
+          <agent-avatar
+            style="margin-right: 2px; margin-bottom: 2px;"
+            size={18}
+            agent-pub-key={key64}
+          ></agent-avatar>
+          {results.count}
+          {#if key64 == store.myAgentPubKeyB64}
+            acks: {results.acks}
+          {/if}
+        </div>
+      {/each}
     </div>
     <div style="display:flex; align-items: center">
       {#if isWeContext()}
         <sl-button
-          on:click={()=>walToPocket() }
+          on:click={() => walToPocket()}
           style="margin-top: 5px;margin-right: 5px"
           title="Add to Pocket"
           circle
@@ -194,7 +210,6 @@
     </div>
   </div>
   <div class="stream" bind:this={conversationContainer}>
-
     {#each $messages as msg}
       {@const isMyMessage =
         encodeHashToBase64(msg.from) == store.myAgentPubKeyB64}
@@ -219,34 +234,42 @@
             {#if ackCount == hashes.length}
               ✓
             {:else if hashes.length > 1}
-              <span class="ack-count"
-              on:mouseover={() => {
-                if (showRecipients !== msg.payload.created) {
-                  showRecipients = msg.payload.created;
-                }
-              }}
-              >{ackCount}</span>
+              <span
+                class="ack-count"
+                on:mouseover={() => {
+                  if (showRecipients !== msg.payload.created) {
+                    showRecipients = msg.payload.created;
+                  }
+                }}>{ackCount}</span
+              >
               <div
-        on:mouseleave={() => {
-          showRecipients = 0;
-        }}
-      >
-      {#if showRecipients === msg.payload.created}
-        {@const keys = Array.from($acks[msg.payload.created].keys())}
-        <div class="msg-recipients">
-          <div class="msg-recipients-title" style="margin-bottom: 2px;">{'received by:'}</div>
-          <div style="display:flex;flex-direction:row; flex-wrap: wrap;">
-            {#each keys as agent, i}
-                <agent-avatar
-                  style="margin-left: 2px; margin-bottom: 2px;"
-                  size={18}
-                  agent-pub-key={encodeHashToBase64(agent)}
-                ></agent-avatar>{#if i<keys.length-1},{/if}
-            {/each}
-          </div>
-        </div>
-      {/if}
-      </div>
+                on:mouseleave={() => {
+                  showRecipients = 0;
+                }}
+              >
+                {#if showRecipients === msg.payload.created}
+                  {@const keys = Array.from($acks[msg.payload.created].keys())}
+                  <div class="msg-recipients">
+                    <div
+                      class="msg-recipients-title"
+                      style="margin-bottom: 2px;"
+                    >
+                      {"received by:"}
+                    </div>
+                    <div
+                      style="display:flex;flex-direction:row; flex-wrap: wrap;"
+                    >
+                      {#each keys as agent, i}
+                        <agent-avatar
+                          style="margin-left: 2px; margin-bottom: 2px;"
+                          size={18}
+                          agent-pub-key={encodeHashToBase64(agent)}
+                        ></agent-avatar>{#if i < keys.length - 1},{/if}
+                      {/each}
+                    </div>
+                  </div>
+                {/if}
+              </div>
             {/if}
           {/if}
         {/if}
@@ -256,7 +279,7 @@
   <div class="send-controls">
     <sl-input
       style="width:60px"
-      value=1
+      value="1"
       bind:this={inputCountElement}
       label="Count"
     ></sl-input>

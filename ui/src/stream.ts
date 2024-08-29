@@ -29,6 +29,7 @@ export class Stream {
         this.messages = derived(this.store,s=>s.sort((a,b)=>a.payload.created - b.payload.created))
     }
     addMessage(message: Message) {
+        let firstAdd = false
         if (message.payload.type == "Ack") {
             this.acks.update((acks)=>{
                 let ack = acks[message.payload.created]
@@ -36,11 +37,13 @@ export class Stream {
                     ack = new HoloHashMap()
                     acks[message.payload.created] = ack
                 }
-                ack.set(message.from,true)
+                if (!ack.get(message.from)) firstAdd = true
+                ack.set(message.from, true)
                 return acks
             })
         } else if (message.payload.type == "Msg") {
             if (! (message.payload.created in this._store)) {
+                firstAdd = true
                 console.log("Adding Message", message)
                 this._store[message.payload.created] =  message
                 this.store.update((messages)=>{
@@ -49,6 +52,7 @@ export class Stream {
                 })
             }
         }
+        return firstAdd
     }
     findMessage(msgId: number) {
         return this._store[msgId]

@@ -17,19 +17,9 @@
 <div class="wrapper">
     {#if $thing.status == "complete"}
       {@const thingData = $thing.value}
-      <div class="thing-content">{thingData.content}</div>
-      <sl-button
-        style="max-width:100px;margin-right:10px"
-        on:click={()=>{dispatch("create", thingData)}}
-      >
-        Create Game
-      </sl-button>
-      <sl-button
-        style="max-width:100px;margin-right:10px"
-        on:click={dispatch("settings", thingData)}
-      >
-        <SvgIcon icon=faCog size=16 />
-      </sl-button>
+      <div class="thing-content">{thingData.content}
+      </div>
+      
 
     {:else if $thing.status == "pending"}
       <sl-skeleton
