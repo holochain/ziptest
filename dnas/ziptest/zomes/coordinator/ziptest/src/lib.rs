@@ -1,4 +1,5 @@
 pub mod thing;
+pub mod utils;
 use ziptest_integrity::*;
 
 use hdk::prelude::*;

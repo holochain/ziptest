@@ -387,6 +387,7 @@
   }
   .test-type {
     padding: 5px;
+    border: solid 1px darkgray;
     cursor: pointer;
   }
   .test-type:hover, .selected {

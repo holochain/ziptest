@@ -18,7 +18,7 @@ coordinator:
     - name: ziptest
       bundled: ../../../target/wasm32-unknown-unknown/release/ziptest.wasm
       dependencies:
-        - name: profiles_integrity
+        - name: ziptest_integrity
     - name: profiles
       bundled: ../../../target/wasm32-unknown-unknown/release/profiles.wasm
       dependencies:

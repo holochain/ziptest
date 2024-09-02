@@ -11,7 +11,6 @@
   import type { WeaveClient } from "@lightningrodlabs/we-applet";
   import StreamPane from "./StreamPane.svelte";
   import type { EntryRecord } from "@holochain-open-dev/utils";
-  import { mdiAlertPlusOutline } from "@mdi/js";
 
   export let roleName = "";
   export let client: AppClient;

@@ -1,19 +1,50 @@
 use hdk::prelude::*;
 use ziptest_integrity::*;
+use crate::utils::*;
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CreateThingInput {
+    pub thing: Thing,
+    pub bunch: String,
+    pub reps: Option<u32>,
+    pub tag: Option<String>,
+}
 
 #[hdk_extern]
-pub fn create_thing(thing: Thing) -> ExternResult<Record> {
-    let thing_hash = create_entry(&EntryTypes::Thing(thing.clone()))?;
-    let record = get(thing_hash.clone(), GetOptions::default())?
-        .ok_or(
-            wasm_error!(
-                WasmErrorInner::Guest(String::from("Could not find the newly created Thing"))
-            ),
-        )?;
-    let path = Path::from("all_things");
-    create_link(path.path_entry_hash()?, thing_hash.clone(), LinkTypes::AllThings, ())?;
-    Ok(record)
+pub fn create_thing(input: CreateThingInput) -> ExternResult<Vec<Record>> {
+    let mut i = 0;
+    let mut results = Vec::new();
+    let mut reps = 1;
+    if let Some(r) = input.reps {
+        reps = r;
+    }
+    while i<reps {
+        let content = if input.reps.is_some() {
+            format!("{}:{}",i,input.thing.content)
+        } else {
+            input.thing.content.clone()
+        };
+
+        let thing = Thing {content};
+        let thing_hash = create_entry(&EntryTypes::Thing(thing))?;
+        let record = get(thing_hash.clone(), GetOptions::default())?
+            .ok_or(
+                wasm_error!(
+                    WasmErrorInner::Guest(String::from("Could not find the newly created Thing"))
+                ),
+            )?;
+        let path = Path::from(input.bunch.clone());
+        let tag = match input.tag.clone() {
+            Some(str) => LinkTag::from(str),
+            None => LinkTag::from(())
+        };
+        create_link_relaxed(path.path_entry_hash()?, thing_hash.clone(), LinkTypes::AllThings, tag)?;
+        results.push(record);
+        i+=1;
+    }
+    Ok(results)
 }
+
 #[hdk_extern]
 pub fn get_thing(original_thing_hash: ActionHash) -> ExternResult<Option<Record>> {
     let input = GetLinksInputBuilder::try_new(original_thing_hash.clone(), LinkTypes::ThingUpdates)?.build();
@@ -60,10 +91,9 @@ pub fn delete_thing(original_thing_hash: ActionHash) -> ExternResult<ActionHash>
 }
 
 #[hdk_extern]
-pub fn get_things(_: ()) -> ExternResult<Vec<Link>> {
-    let path = Path::from("all_things");
+pub fn get_things(bunch: String) -> ExternResult<Vec<Link>> {
+    let path = Path::from(bunch.clone());
     let input = GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllThings)?.build();
     let links = get_links(input)?;
-
     Ok(links)
 }

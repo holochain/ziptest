@@ -23,22 +23,20 @@ import type { UnsubscribeFunction } from 'emittery';
 import { type Message, Stream, type Payload } from './stream';
 import {time} from "./util"
 import { derived } from 'svelte/store';
+import type { Thing } from './thingStore';
 
 
 TimeAgo.addDefaultLocale(en)
 
 const ZOME_NAME = 'ziptest'
 
-export type Thing = 
-{
-    content: string
+export type CreateThingInput = {
+    thing: Thing,
+    bunch: string,
+    reps: number,
+    tag: string| undefined,
 }
-export type ThingData = 
-{
-    originalHash: ActionHash,
-    content: string,
-    record: EntryRecord<Thing>,
-}
+
 export type EntryTypes = string
   | ({ type: 'Thing' } & Thing);
 
@@ -58,8 +56,16 @@ export class ZipTestClient extends ZomeClient<ZipTestSignal> {
         })
     }
 
-    async createThing(content) : Promise<EntryRecord<Thing>> {
-        return new EntryRecord(await this.callZome('create_thing', {content}))
+    async createThing(bunch:string, reps:number, content:string, tag:string| undefined) : Promise<EntryRecord<Thing>> {
+        console.log("CREATING THING", content)
+        
+        const input: CreateThingInput = {
+            thing: {content},
+            reps,
+            bunch,
+            tag
+        }
+        return new EntryRecord(await this.callZome('create_thing', input))
     }
     async updateThing(origHash: ActionHash, prevHash:ActionHash, content: string) : Promise<EntryRecord<Thing>> {
         return new EntryRecord(await this.callZome('update_thing', {
@@ -67,8 +73,8 @@ export class ZipTestClient extends ZomeClient<ZipTestSignal> {
             previous_thing_hash: prevHash,
             updated_thing: {content}}))
     }
-    async getThings() : Promise<Link[]> {
-        const results = await this.callZome('get_things', undefined)
+    async getThings(bunch: string) : Promise<Link[]> {
+        const results = await this.callZome('get_things', bunch)
         return results
     }
     async getThing(hash: ActionHash) : Promise<EntryRecord<Thing>| undefined> {
@@ -94,20 +100,6 @@ export class ZipTestStore {
     timeAgo = new TimeAgo('en-US')
     updating = false
     client: ZipTestClient;
-    thingLinks: AsyncReadable<Link[]>
-    thingHashes: AsyncReadable<ActionHash[]>
-    things: LazyHoloHashMap<ActionHash,AsyncReadable<ThingData>> = new LazyHoloHashMap(
-        (hash: ActionHash) => {
-            const latestVersion = latestVersionOfEntryStore(this.client, () =>
-                this.client.getThing(hash)
-            );
-            const asyncThing = pipe(latestVersion,
-                record => record.entry.content
-                )
-            return pipe(joinAsync([asyncThing, latestVersion]), ([content, record]) => {return {originalHash: hash, content,record}})
-        }
-    )
-    thingsList: AsyncReadable<ThingData[]>
     uiProps: Writable<UIProps> 
     unsub: Unsubscriber
     dnaHash: DnaHash
@@ -247,18 +239,6 @@ export class ZipTestStore {
           })
         this.myAgentPubKeyB64 = encodeHashToBase64(this.myAgentPubKey);
 
-        this.thingLinks = collectionStore(
-            this.client,
-            () => this.client.getThings(),
-            'AllThings'
-          );
-        this.thingHashes = asyncDerived(this.thingLinks,
-            links=> links.map(link=>link.target)
-        )
-        this.thingsList = pipe(this.thingHashes, 
-            hashes=> sliceAndJoin(this.things,hashes),
-            map=>Array.from(map.values())
-        )
 
         this.uiProps = writable({
             tips: new HoloHashMap,
@@ -295,10 +275,6 @@ export class ZipTestStore {
    
     get myAgentPubKey(): AgentPubKey {
         return this.client.client.myPubKey;
-    }
-
-    async makeThing(content: string) : Promise<any> {
-        return await this.client.createThing(content)
     }
 
 }

@@ -38,10 +38,14 @@ export class ThingStore {
     });
   thingsList: AsyncReadable<ThingData[]>;
 
+  async createBunch(bunch:string, content:string) {
+    await this.client.createThing("bunches",undefined, content, bunch);
+  }
+
   constructor(public client: ZipTestClient) {
     this.thingLinks = collectionStore(
       this.client,
-      () => this.client.getThings(),
+      () => this.client.getThings("bunches"),
       "AllThings",
       1000
     );
