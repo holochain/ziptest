@@ -42,6 +42,10 @@ export type EntryTypes = string
 
 export type ZipTestSignal = ActionCommittedSignal<EntryTypes, Message>;
 
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export class ZipTestClient extends ZomeClient<ZipTestSignal> {
     constructor(public client: AppClient, public roleName, public zomeName = ZOME_NAME) {
         super(client, roleName, zomeName);
@@ -56,6 +60,8 @@ export class ZipTestClient extends ZomeClient<ZipTestSignal> {
         })
     }
 
+
+    
     async createThing(bunch:string, reps:number, content:string, tag:string| undefined) : Promise<EntryRecord<Thing>> {
         console.log("CREATING THING", content)
         
@@ -65,7 +71,21 @@ export class ZipTestClient extends ZomeClient<ZipTestSignal> {
             bunch,
             tag
         }
-        return new EntryRecord(await this.callZome('create_thing', input))
+        let result
+        let retries = 0
+        while (!result) {
+            try {
+                result = await this.callZome('create_thing', input)
+            } catch(e) {
+                retries += 1
+                console.log("got error, retrying ", retries)
+                await delay(100)
+                if (retries > 1000) {
+                    throw(new Error("too many retries"))
+                }
+            }
+        }
+        return result
     }
     async updateThing(origHash: ActionHash, prevHash:ActionHash, content: string) : Promise<EntryRecord<Thing>> {
         return new EntryRecord(await this.callZome('update_thing', {

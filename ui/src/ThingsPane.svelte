@@ -11,75 +11,85 @@
   const { getStore }: any = getContext("store");
   const store: ZipTestStore = getStore();
 
-  let bunches
+  let bunches;
 
-  let bunch: string = ""
+  let bunch: string = "";
 
-  let interval
-  onMount(()=>{
+  let interval;
+  let activateBunch;
+  onMount(() => {
     interval = setInterval(async () => {
-        const b = await store.client.getThings("bunches")
-        if (!bunches || b.length != bunches.length) {
-          bunches = b
+      const b = await store.client.getThings("bunches");
+      if (!bunches || b.length != bunches.length) {
+        bunches = b;
+        if (activateBunch) {
+          bunches.forEach((l) => {
+            if (tag2Bunch(l.tag) == activateBunch) {
+              activeBunch = activateBunch;
+              activateBunch = "";
+            }
+          });
         }
-    }, 3000);
-  })
-  onDestroy(()=>{
-    if (interval) {
-        clearInterval(interval)
-    }
-  })
-  
-  const createBunch = async () => {
-    const profile = get(store.profilesStore.myProfile)
-    const name = (profile.status=="complete") ? profile.value.entry.nickname : "unknown"
-    bunch = `${name}.${new Date().getTime()}`
-    inputElement.value = bunch
-    let reps = parseInt(inputRepsElement.value);
-    let count = parseInt(inputCountElement.value);
-    let delay = parseInt(inputDelayElement.value);
-    await store.client.createThing("bunches",undefined, JSON.stringify({reps,count,delay}), bunch);
-    await createThings()
-  };
-
-  const createThings = async () => {
-    let count = parseInt(inputCountElement.value);
-    let reps = parseInt(inputRepsElement.value);
-    let delay = parseInt(inputDelayElement.value);
-    setTimeout(() => {
-      _createThing(inputCountElement.value,reps);
-      count -= 1;
-      inputCountElement.value = `${count}`;
-      if (count > 0) {
-        createThings();
       }
-    }, delay);
-  };
-  const _createThing = async (text, reps) => {
-    await store.client.createThing(bunch, reps, text, undefined);
+    }, 3000);
+  });
+  onDestroy(() => {
+    if (interval) {
+      clearInterval(interval);
+    }
+  });
+
+  const createBunch = async () => {
+    const profile = get(store.profilesStore.myProfile);
+    const name =
+      profile.status == "complete" ? profile.value.entry.nickname : "unknown";
+    bunch = `${name}.${new Date().getTime()}`;
+    let reps = parseInt(inputRepsElement.value);
+    let count = parseInt(inputCountElement.value);
+    let delay = parseInt(inputDelayElement.value);
+    await store.client.createThing(
+      "bunches",
+      undefined,
+      JSON.stringify({ reps, count, delay }),
+      bunch
+    );
+    activateBunch = bunch;
   };
 
   function tag2Bunch(array) {
-  var result = "";
-  for (var i = 0; i < array.length; i++) {
-    result += String.fromCharCode(array[i]);
+    var result = "";
+    for (var i = 0; i < array.length; i++) {
+      result += String.fromCharCode(array[i]);
+    }
+    return result;
   }
-  return result;
-}
 
   const bunch2BunchName = (bunch) => {
-    return `${new Date(parseInt(bunch.split(".")[1]))}`
-  }
+    const [agent, timestamp] = bunch.split(".")
+    const date = new Date(parseInt(timestamp))
+    return `${agent}:${date.toISOString()}`;
+  };
 
-  let inputElement;
+  const bunchHash = (bunch) => {
+    console.log("FISH", activeBunch);
+    console.log(
+      "FISH2",
+      bunches.map((l) => tag2Bunch(l.tag))
+    );
+    const link = bunches.find((link) => tag2Bunch(link.tag) == bunch);
+    console.log("FISH3", link);
+    return link.target;
+  };
+
   let inputRepsElement;
   let inputCountElement;
   let inputDelayElement;
   let disabled = false;
-  let activeBunch = ""
+  let activeBunch = "";
 </script>
 
-  <div class="wrapper">
+<div class="wrapper">
+  <div class="left-column">
     <div class="send-controls">
       <sl-input
         style="width:60px"
@@ -99,69 +109,77 @@
         bind:this={inputDelayElement}
         label="Delay"
       ></sl-input>
-      <sl-input
-        style="width:300px"
-        bind:this={inputElement}
-        on:sl-input={(e) => (disabled = !e.target.value || !inputElement.value)}
-        label="Message"
-      ></sl-input>
 
       <sl-button
         style="margin-left:10px;"
-        circle
         {disabled}
         on:click={() => createBunch()}
-        ><SvgIcon icon="ziptest" size="20" />
+        >New Bunch
       </sl-button>
     </div>
     <div class="header">
-      Bunches Count: {bunches ? bunches.length: "?"}
+      Bunches Count: {bunches ? bunches.length : "?"}
     </div>
 
     {#if !bunches}
-    <sl-skeleton effect="pulse" style="height: 10px; width: 100px;"></sl-skeleton>
+      <sl-skeleton effect="pulse" style="height: 10px; width: 100px;"
+      ></sl-skeleton>
     {:else}
-    
-    <div class="bunches">
-      {#each bunches as link}
-      {@const bunch = tag2Bunch(link.tag)}
-      <div on:click={()=>{
-        if (bunch != activeBunch) {
-          activeBunch = bunch
-        }
-        else {
-          activeBunch = ''
-        }
-        }}>{bunch2BunchName(bunch)}</div>
-        {#if bunch == activeBunch}
-          <Bunch bunchHash={link.target} bunch={bunch}></Bunch>
-        {/if}
-      {/each}
-    </div>
+      <div class="bunches">
+        {#each bunches as link}
+          {@const bunch = tag2Bunch(link.tag)}
+          <div
+            class="bunch-item"
+            class:selected={bunch==activeBunch}
+            on:click={() => {
+              if (bunch != activeBunch) {
+                activeBunch = bunch;
+              } else {
+                activeBunch = "";
+              }
+            }}
+          >
+            {bunch2BunchName(bunch)}
+          </div>
+        {/each}
+      </div>
     {/if}
   </div>
+  {#if activeBunch}
+    <div class="bunch">
+      <h3>{bunch2BunchName(activeBunch)}</h3>
+      {#key activeBunch}
+        <Bunch bunchHash={bunchHash(activeBunch)} bunch={activeBunch}></Bunch>
+      {/key}
+    </div>
+  {/if}
+</div>
 
 <style>
   .wrapper {
+    display: flex;
+  }
+  .left-column {
     padding-left: 10px;
     display: flex;
     flex-direction: column;
 
-    width: 100%;
   }
   .bunches {
-    width: 100%;
     display: flex;
     flex: auto;
     flex-direction: column;
     overflow-y: auto;
   }
-  .thing {
-    position: relative;
-    display: flex;
-    margin: 5px;
-    flex-shrink: 1;
-    align-self: flex-start;
+  .selected {
+    font-weight: bold;
+  }
+  .bunch-item {
+    cursor: pointer;
+  }
+  .bunch {
+    width: 850px;
+    margin-left: 10px;
   }
   .header {
     display: flex;
@@ -170,7 +188,6 @@
   }
   .send-controls {
     display: flex;
-    justify-content: flex-end;
     padding: 5px;
   }
 </style>
