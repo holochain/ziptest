@@ -179,18 +179,18 @@ export class ZipTestStore {
 
         const firstAdd = stream.addMessage(message)
         if (message.payload.type == "Msg") {
-            if (firstAdd && isWeContext()) {
-                await this.weaveClient.notifyFrame([
-                    {
-                        title: `message from ${encodeHashToBase64(message.from)}`,
-                        body: message.payload.text,
-                        notification_type: "message",
-                        icon_src: undefined,
-                        urgency: "high",
-                        timestamp: message.payload.created
-                    }
-                ])
-            }
+            // if (firstAdd && isWeContext()) {
+            //     await this.weaveClient.notifyFrame([
+            //         {
+            //             title: `message from ${encodeHashToBase64(message.from)}`,
+            //             body: message.payload.text,
+            //             notification_type: "message",
+            //             icon_src: undefined,
+            //             urgency: "high",
+            //             timestamp: message.payload.created
+            //         }
+            //     ])
+            // }
             if (encodeHashToBase64(message.from) != this.myAgentPubKeyB64) {
                 await this.client.sendMessage(streamId, {type:"Ack", created:message.payload.created},[message.from])
             }
