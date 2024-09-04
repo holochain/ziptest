@@ -113,12 +113,13 @@
       <sl-button
         style="margin-left:10px;"
         {disabled}
+        loading={activateBunch}
         on:click={() => createBunch()}
-        >New Bunch
+        >New Test
       </sl-button>
     </div>
     <div class="header">
-      Bunches Count: {bunches ? bunches.length : "?"}
+      Tests Count: {bunches ? bunches.length : "?"}
     </div>
 
     {#if !bunches}

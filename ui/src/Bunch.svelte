@@ -110,18 +110,18 @@
               runGraph()
               createThings()
             }}
-          >Create Things</sl-button>
+          >Start Test</sl-button>
         {:else}
           <sl-button
           on:click={()=>{
             initialFound = ""
             runGraph()
           }}
-          >Wait For Things</sl-button>
+          >Watch Test</sl-button>
         {/if}
       {:else}
         {#if allFound}
-          All {expected} things found after {seconds} seconds.
+          All {expected} entries found after {seconds} seconds.
         {:else}
           {#if creatingThings}
           <div>Create Count: {creatingCount}</div>

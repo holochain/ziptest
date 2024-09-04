@@ -82,23 +82,6 @@
   let currentStream: string | undefined = undefined;
   $: liveStreams = store.streams;
 
-  $: timer = time;
-
-  let fileinput;
-  const onFileSelected = (e) => {
-    let file = e.target.files[0];
-    let reader = new FileReader();
-
-    reader.addEventListener(
-      "load",
-      async () => {
-        const b = JSON.parse(reader.result as string);
-        await store.makeThing(b);
-      },
-      false
-    );
-    reader.readAsText(file);
-  };
 </script>
 
 <div class="flex-scrollable-parent">
@@ -108,8 +91,8 @@
         <AboutDialog bind:this={aboutDialog} />
         <div style="display:flex; background-color: #eee;">
           <SvgIcon icon="ziptest"></SvgIcon>
-          <div class="test-type" class:selected={currentStream=="_"} on:click={()=>currentStream="_"}><span style="font-weight:bold;font-size:110%">Things</span></div>
-          <div class="test-type" class:selected={currentStream!="_"} on:click={()=>currentStream=""}><span style="font-weight:bold;font-size:110%">Streams</span></div>
+          <div class="test-type" class:selected={currentStream=="_"} on:click={()=>currentStream="_"}><span style="font-weight:bold;font-size:110%">Entries</span></div>
+          <div class="test-type" class:selected={currentStream!="_"} on:click={()=>currentStream=""}><span style="font-weight:bold;font-size:110%">Signals</span></div>
         </div>
 
         <div class="main-pane">

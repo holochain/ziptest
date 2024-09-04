@@ -15,7 +15,7 @@
   import type { Stream, Payload, Message } from "./stream";
   import type { AgentPubKey } from "@holochain/client";
   import { HoloHashMap } from "@holochain-open-dev/utils";
-  import { debounce } from "lodash-es";
+  import { hashEqual } from "./util";
 
   const { getStore }: any = getContext("store");
   const store: ZipTestStore = getStore();
@@ -35,9 +35,10 @@
     };
     store.weaveClient?.walToPocket(attachment);
   };
-  const SCROLL_THRESHOLD = 100; // How close to the bottom must the user be to consider it "at the bottom"
 
   type Results = {
+    from: AgentPubKey;
+    expected: number;
     count: number;
     acks: number;
   };
@@ -46,29 +47,31 @@
   $: myProfile = get(store.profilesStore.myProfile).value;
 
   onMount(async () => {
-    conversationContainer.addEventListener("scroll", handleScroll);
   });
   onDestroy(() => {
-    conversationContainer.removeEventListener("scroll", handleScroll);
   });
 
   const getSources = (
     messages: Message[],
     acks: { [key: number]: HoloHashMap<AgentPubKey, boolean> }
   ) => {
-    const sources: HoloHashMap<AgentPubKey, Results> = new HoloHashMap();
+    const sources: { [key: string]: Results } = {};
 
     messages.forEach((m) => {
-      const fromB6 = encodeHashToBase64(m.from);
-      const r = sources.get(m.from);
-      const results: Results = r ? r : { count: 1, acks: 0 };
-      if (r) {
-        results.count += 1;
+      if (m.payload.type == "Msg") {
+        const [test, expected, count] = m.payload.text.split(".");
+        const r = sources[test];
+        const results: Results = r
+          ? r
+          : { expected: parseInt(expected), count: 1, acks: 0, from: m.from };
+        if (r) {
+          results.count += 1;
+        }
+        if (hashEqual(m.from, store.myAgentPubKey)) {
+          results.acks += getAckCount(acks, m.payload.created);
+        }
+        sources[test] = results;
       }
-      if (fromB6 == store.myAgentPubKeyB64) {
-        results.acks += getAckCount(acks, m.payload.created);
-      }
-      sources.set(m.from, results);
     });
     return sources;
   };
@@ -79,10 +82,17 @@
   $: lastSeen = store.lastSeen;
   $: agentActive = store.agentActive;
 
-  let inputElement;
+  let currentTest;
+  let currentTestExpected;
   let inputCountElement;
   let inputDelayElement;
   let disabled;
+  const startTest = async () => {
+    const now = new Date();
+    currentTest = `${now.getTime()}`;
+    currentTestExpected = parseInt(inputCountElement.value);
+    await sendMessage();
+  };
   const sendMessage = async () => {
     let count = parseInt(inputCountElement.value);
     let delay = parseInt(inputDelayElement.value);
@@ -92,18 +102,19 @@
       inputCountElement.value = `${count}`;
       if (count > 0) {
         sendMessage();
+      } else {
+        currentTest = ""
       }
     }, delay);
   };
-  const _sendMessage = async (text) => {
+  const _sendMessage = async (count) => {
     const payload: Payload = {
       type: "Msg",
-      text,
+      text: `${currentTest}.${currentTestExpected}.${count}`,
       created: Date.now(),
     };
     console.log("SENDING TO", hashes);
     await store.sendMessage(stream.id, payload, hashes);
-    inputElement.value = "";
   };
   const getAckCount = (
     acks: { [key: number]: HoloHashMap<Uint8Array, boolean> },
@@ -116,41 +127,7 @@
     return 0;
   };
   let confirmDialog;
-  const convertMessageText = (text: string): string => {
-    let formatted = text.replace(
-      /(https?:\/\/[^\s]+)/g,
-      '<a style="text-decoration: underline;" href="$1">$1</a>'
-    );
-    formatted = formatted.replace(
-      /(we:\/\/[^\s]+)/g,
-      '<a style="text-decoration: underline;" href="$1">$1</a>'
-    );
-    return formatted;
-  };
-
-  let conversationContainer: HTMLElement;
-
-  let scrollAtBottom = true;
-  // Reactive update to scroll to the bottom every time the messages update,
-  // but only if the user is near the bottom already
-  $: if ($messages && $messages.length > 0) {
-    if (scrollAtBottom) {
-      setTimeout(scrollToBottom, 100);
-    }
-  }
-
-  const handleScroll = debounce(() => {
-    scrollAtBottom =
-      conversationContainer.scrollHeight - conversationContainer.scrollTop <=
-      conversationContainer.clientHeight + SCROLL_THRESHOLD;
-  }, 100);
-
-  function scrollToBottom() {
-    if (conversationContainer) {
-      conversationContainer.scrollTop = conversationContainer.scrollHeight;
-      scrollAtBottom = true;
-    }
-  }
+ 
 
   let showRecipients = 0;
 </script>
@@ -165,18 +142,43 @@
 <div class="person-feed">
   <div class="header">
     <div>
-      <span>Total Messages: {$messages.length}</span>
-      {#each Array.from(sources.entries()) as [key, results]}
-        {@const key64 = encodeHashToBase64(key)}
+      <div class="send-controls">
+        <sl-input
+          style="width:60px"
+          value="1"
+          bind:this={inputCountElement}
+          label="Count"
+        ></sl-input>
+        <sl-input
+          style="width:60px"
+          value={500}
+          bind:this={inputDelayElement}
+          label="Delay"
+        ></sl-input>
+    
+        <sl-button style="margin-left:10px;" loading={currentTest} disabled={currentTest} on:click={startTest}
+          >Start Test
+        </sl-button>
+      </div>
+      {#each Object.entries(sources) as [test, results]}
         <div style="display:flex">
           <agent-avatar
             style="margin-right: 2px; margin-bottom: 2px;"
             size={18}
-            agent-pub-key={key64}
+            agent-pub-key={encodeHashToBase64(results.from)}
           ></agent-avatar>
-          {results.count}
-          {#if key64 == store.myAgentPubKeyB64}
-            acks: {results.acks}
+          <span style="padding-left:5px;padding-right:5px;">{(new Date(parseInt(test)) ).toISOString()}:</span>
+
+          {#if hashEqual(results.from, store.myAgentPubKey)}
+            {results.count} of {results.expected} sent with {results.acks} acks ({(
+              (results.acks / results.expected) *
+              100
+            ).toFixed(0)}%)
+          {:else}
+            {results.count} of {results.expected} received ({(
+              (results.count / results.expected) *
+              100
+            ).toFixed(0)}%)
           {/if}
         </div>
       {/each}
@@ -209,107 +211,8 @@
       {/each} -->
     </div>
   </div>
-  <div class="stream" bind:this={conversationContainer}>
-    {#each $messages as msg}
-      {@const isMyMessage =
-        encodeHashToBase64(msg.from) == store.myAgentPubKeyB64}
-      <div class="msg" class:my-msg={isMyMessage}>
-        {#if msg.payload.type == "Msg"}
-          {#if !isMyMessage && showFrom}
-            <agent-avatar
-              style="margin-right:5px"
-              disable-copy={true}
-              size={20}
-              agent-pub-key={encodeHashToBase64(msg.from)}
-            ></agent-avatar>
-          {/if}
-          {@html convertMessageText(msg.payload.text)}
-          <span
-            title={`Received: ${new Date(msg.received).toLocaleTimeString()}`}
-            class="msg-timestamp"
-            >{new Date(msg.payload.created).toLocaleTimeString()}</span
-          >
-          {#if isMyMessage}
-            {@const ackCount = getAckCount($acks, msg.payload.created)}
-            {#if ackCount == hashes.length}
-              ✓
-            {:else if hashes.length > 1}
-              <span
-                class="ack-count"
-                on:mouseover={() => {
-                  if (showRecipients !== msg.payload.created) {
-                    showRecipients = msg.payload.created;
-                  }
-                }}>{ackCount}</span
-              >
-              <div
-                on:mouseleave={() => {
-                  showRecipients = 0;
-                }}
-              >
-                {#if showRecipients === msg.payload.created}
-                  {@const keys = Array.from($acks[msg.payload.created].keys())}
-                  <div class="msg-recipients">
-                    <div
-                      class="msg-recipients-title"
-                      style="margin-bottom: 2px;"
-                    >
-                      {"received by:"}
-                    </div>
-                    <div
-                      style="display:flex;flex-direction:row; flex-wrap: wrap;"
-                    >
-                      {#each keys as agent, i}
-                        <agent-avatar
-                          style="margin-left: 2px; margin-bottom: 2px;"
-                          size={18}
-                          agent-pub-key={encodeHashToBase64(agent)}
-                        ></agent-avatar>{#if i < keys.length - 1},{/if}
-                      {/each}
-                    </div>
-                  </div>
-                {/if}
-              </div>
-            {/if}
-          {/if}
-        {/if}
-      </div>
-    {/each}
-  </div>
-  <div class="send-controls">
-    <sl-input
-      style="width:60px"
-      value="1"
-      bind:this={inputCountElement}
-      label="Count"
-    ></sl-input>
-    <sl-input
-      style="width:60px"
-      value={500}
-      bind:this={inputDelayElement}
-      label="Delay"
-    ></sl-input>
-    <sl-input
-      style="width:300px"
-      bind:this={inputElement}
-      on:sl-input={(e) => (disabled = !e.target.value || !inputElement.value)}
-      on:keydown={(e) => {
-        if (e.keyCode == 13) {
-          _sendMessage(inputElement.value);
-          e.stopPropagation();
-        }
-      }}
-      label="Message"
-    ></sl-input>
 
-    <sl-button
-      style="margin-left:10px;"
-      circle
-      {disabled}
-      on:click={sendMessage}
-      ><SvgIcon icon="ziptest" size="20" />
-    </sl-button>
-  </div>
+
 </div>
 
 <style>
@@ -325,74 +228,9 @@
     justify-content: space-between;
     align-items: center;
   }
-  .stream {
-    width: 100%;
-    display: flex;
-    flex: auto;
-    flex-direction: column;
-    overflow-y: auto;
-    height: 0px;
-  }
-  .msg {
-    position: relative;
-    display: flex;
-    margin: 5px;
-    border-radius: 0px 15px 0px 15px;
-    color: white;
-    padding: 3px 10px;
-    flex-shrink: 1;
-    align-self: flex-start;
-    background-color: rebeccapurple;
-  }
-  a {
-    text-decoration: underline;
-  }
-  .my-msg {
-    border-radius: 15px 0px 15px 0px;
-    align-self: flex-end;
-    background-color: blue;
-  }
+
   .send-controls {
     display: flex;
-    justify-content: flex-end;
     padding: 5px;
-  }
-  .msg-timestamp {
-    margin-left: 4px;
-    font-size: 80%;
-    color: #ccc;
-  }
-  .ack-count {
-    display: flex;
-    justify-content: center;
-    margin: auto;
-    width: 15px;
-    height: 15px;
-    margin-left: 5px;
-    background-color: yellow;
-    color: black;
-    font-size: 80%;
-    border-radius: 50%;
-  }
-  .person-inactive {
-    opacity: 0.5;
-  }
-  .msg-recipients {
-    z-index: 1;
-    align-items: flex-end;
-    position: absolute;
-    top: 2px;
-    right: 14px;
-    background-color: #f3ff3b;
-    margin-top: 5px;
-    padding: 5px;
-    color: white;
-    border-radius: 8px;
-    max-width: 220px;
-  }
-  .msg-recipients-title {
-    font-size: 10px;
-    color: #08230e;
-    cursor: default;
   }
 </style>
