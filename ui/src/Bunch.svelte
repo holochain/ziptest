@@ -100,6 +100,14 @@
         <sl-skeleton effect="pulse" style="height: 10px; width: 100%"></sl-skeleton>
       {:else if initialFound === "found"}
         Expected: {expected}; Total found: {moments[0]}
+        {#if moments[0] < expected }
+          <sl-button
+          on:click={()=>{
+            initialFound = ""
+            runGraph()
+          }}
+          >Watch Test</sl-button>
+        {/if}
       {:else if initialFound === "notFound"}
         <div>Reps: {bunchContent.reps}; Count: {bunchContent.count}; Delay: {bunchContent.delay}</div>
         {#if hashEqual(bunchRecord.action.author, store.myAgentPubKey)}
@@ -126,7 +134,7 @@
           {#if creatingThings}
           <div>Create Count: {creatingCount}</div>
           {/if}
-          <div>Seconds elapsed: : {seconds}</div>
+          <div>Seconds elapsed: {seconds}</div>
         {/if}
         <div>
           Start: {start}

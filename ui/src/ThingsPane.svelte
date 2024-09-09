@@ -71,13 +71,7 @@
   };
 
   const bunchHash = (bunch) => {
-    console.log("FISH", activeBunch);
-    console.log(
-      "FISH2",
-      bunches.map((l) => tag2Bunch(l.tag))
-    );
     const link = bunches.find((link) => tag2Bunch(link.tag) == bunch);
-    console.log("FISH3", link);
     return link.target;
   };
 

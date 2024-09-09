@@ -39,6 +39,7 @@
   type Results = {
     from: AgentPubKey;
     expected: number;
+    delay: number;
     count: number;
     acks: number;
   };
@@ -59,11 +60,11 @@
 
     messages.forEach((m) => {
       if (m.payload.type == "Msg") {
-        const [test, expected, count] = m.payload.text.split(".");
+        const [test, delay, expected, count] = m.payload.text.split(".");
         const r = sources[test];
         const results: Results = r
           ? r
-          : { expected: parseInt(expected), count: 1, acks: 0, from: m.from };
+          : { expected: parseInt(expected),delay:parseInt(delay),count: 1, acks: 0, from: m.from };
         if (r) {
           results.count += 1;
         }
@@ -110,7 +111,7 @@
   const _sendMessage = async (count) => {
     const payload: Payload = {
       type: "Msg",
-      text: `${currentTest}.${currentTestExpected}.${count}`,
+      text: `${currentTest}.${inputDelayElement.value}.${currentTestExpected}.${count}`,
       created: Date.now(),
     };
     console.log("SENDING TO", hashes);
@@ -167,11 +168,11 @@
             size={18}
             agent-pub-key={encodeHashToBase64(results.from)}
           ></agent-avatar>
-          <span style="padding-left:5px;padding-right:5px;">{(new Date(parseInt(test)) ).toISOString()}:</span>
+          <span style="padding-left:5px;padding-right:5px;">{(new Date(parseInt(test)) ).toISOString()} (delay {results.delay}): </span>
 
           {#if hashEqual(results.from, store.myAgentPubKey)}
             {results.count} of {results.expected} sent with {results.acks} acks ({(
-              (results.acks / results.expected) *
+              (results.acks / results.count) *
               100
             ).toFixed(0)}%)
           {:else}
