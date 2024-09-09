@@ -42,6 +42,8 @@
     delay: number;
     count: number;
     acks: number;
+    agents: number;
+    graph: number[];
   };
 
   //@ts-ignore
@@ -52,25 +54,37 @@
   onDestroy(() => {
   });
 
+  let inputSecondsElement;
+
   const getSources = (
     messages: Message[],
     acks: { [key: number]: HoloHashMap<AgentPubKey, boolean> }
   ) => {
     const sources: { [key: string]: Results } = {};
 
+    const seconds = inputSecondsElement ? parseInt(inputSecondsElement.value?inputSecondsElement.value : 60) : 60
+
     messages.forEach((m) => {
       if (m.payload.type == "Msg") {
-        const [test, delay, expected, count] = m.payload.text.split(".");
+        const iAmSender = hashEqual(m.from, store.myAgentPubKey)
+        const [test, delay, expected, count, agents] = m.payload.text.split(".");
         const r = sources[test];
+        const countInt = parseInt(count)
+        const delayInt = parseInt(delay)
+        const expectedInt = parseInt(expected)
+        const agentsInt = parseInt(agents)
         const results: Results = r
           ? r
-          : { expected: parseInt(expected),delay:parseInt(delay),count: 1, acks: 0, from: m.from };
+          : { expected: iAmSender ? expectedInt*agentsInt : expectedInt ,delay:delayInt,count: 1, acks: 0, from: m.from, agents:agentsInt, graph:[] };
         if (r) {
-          results.count += 1;
+          results.count += iAmSender ? agentsInt : 1;
         }
-        if (hashEqual(m.from, store.myAgentPubKey)) {
+        if (iAmSender) {
           results.acks += getAckCount(acks, m.payload.created);
         }
+        const signalAt = countInt*delayInt
+        const index = Math.trunc(signalAt/(1000*seconds))
+        results.graph[index] = !results.graph[index] ? 1 : results.graph[index]+1
         sources[test] = results;
       }
     });
@@ -85,6 +99,9 @@
 
   let currentTest;
   let currentTestExpected;
+  let currentTestCount;
+  let currentTestDelay;
+
   let inputCountElement;
   let inputDelayElement;
   let disabled;
@@ -92,26 +109,27 @@
     const now = new Date();
     currentTest = `${now.getTime()}`;
     currentTestExpected = parseInt(inputCountElement.value);
+    currentTestDelay = parseInt(inputDelayElement.value);
+    currentTestCount = 0
     await sendMessage();
   };
   const sendMessage = async () => {
-    let count = parseInt(inputCountElement.value);
-    let delay = parseInt(inputDelayElement.value);
     setTimeout(() => {
-      _sendMessage(inputCountElement.value);
-      count -= 1;
-      inputCountElement.value = `${count}`;
-      if (count > 0) {
-        sendMessage();
-      } else {
-        currentTest = ""
+      if (currentTest) {
+        _sendMessage();
+        currentTestCount+=1;
+        if (currentTestCount < currentTestExpected && currentTest) {
+          sendMessage();
+        } else {
+          currentTest = ""
+        }
       }
-    }, delay);
+    }, currentTestDelay);
   };
-  const _sendMessage = async (count) => {
+  const _sendMessage = async () => {
     const payload: Payload = {
       type: "Msg",
-      text: `${currentTest}.${inputDelayElement.value}.${currentTestExpected}.${count}`,
+      text: `${currentTest}.${currentTestDelay}.${currentTestExpected}.${currentTestCount}.${hashes.length}`,
       created: Date.now(),
     };
     console.log("SENDING TO", hashes);
@@ -144,24 +162,38 @@
   <div class="header">
     <div>
       <div class="send-controls">
-        <sl-input
-          style="width:60px"
-          value="1"
-          bind:this={inputCountElement}
-          label="Count"
-        ></sl-input>
-        <sl-input
-          style="width:60px"
-          value={500}
-          bind:this={inputDelayElement}
-          label="Delay"
-        ></sl-input>
-    
-        <sl-button style="margin-left:10px;" loading={currentTest} disabled={currentTest} on:click={startTest}
-          >Start Test
-        </sl-button>
+        {#if !currentTest}
+          <sl-input
+            style="width:60px"
+            value="1"
+            bind:this={inputCountElement}
+            label="Count"
+          ></sl-input>
+          <sl-input
+            style="width:60px"
+            value={500}
+            bind:this={inputDelayElement}
+            label="Delay"
+          ></sl-input>
+      
+          <sl-button style="margin-left:10px;"  on:click={startTest}
+            >Start Test
+          </sl-button>
+        {:else}
+        Current Count: {currentTestCount} of {currentTestExpected} (delay {currentTestDelay})
+          <sl-button style="margin-left:10px;" disabled={!currentTest} on:click={()=>currentTest=""}
+            >Cancel Test
+          </sl-button>
+        {/if}
+          
       </div>
-      {#each Object.entries(sources) as [test, results]}
+      Graph Unit (seconds)
+      <sl-input
+            style="width:60px"
+            value={60}
+            bind:this={inputSecondsElement}
+          ></sl-input> 
+      {#each Object.entries(sources).reverse() as [test, results]}
         <div style="display:flex">
           <agent-avatar
             style="margin-right: 2px; margin-bottom: 2px;"
@@ -181,6 +213,11 @@
               100
             ).toFixed(0)}%)
           {/if}
+        </div>
+        <div class="graph">
+          {#each results.graph as count}
+            <div  class="bar" style={`height:${count*5}px; ;width:4px`}> </div>
+          {/each}
         </div>
       {/each}
     </div>
@@ -217,6 +254,17 @@
 </div>
 
 <style>
+
+ .graph {
+    display: flex;
+    align-items: end;
+    width: 800px;
+    overflow-x: scroll;
+  }
+  .bar {
+    background-color: red;
+    justify-content: flex-end;
+  }
   .person-feed {
     padding-left: 10px;
     display: flex;
