@@ -5,7 +5,7 @@
     import Avatar from './Avatar.svelte';
     import { get } from 'svelte/store';    
     import SvgIcon from "./SvgIcon.svelte";
-    import { isWeContext } from '@lightningrodlabs/we-applet';
+    import { isWeaveContext } from '@theweave/api';
     import type { ZipTestStore } from "./store";
 
     const { getStore } :any = getContext('store');
@@ -26,7 +26,7 @@
     }
 
 </script>
-{#if !isWeContext()}
+{#if !isWeaveContext()}
     <div class="nav-button " on:click={editAvatar} title={myName ? myName:"Edit Avatar"}>
         <Avatar size={16} agentPubKey={store.myAgentPubKey} placeholder={true} showNickname={false}/>
     </div>

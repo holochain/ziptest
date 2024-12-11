@@ -3,7 +3,7 @@
   import ControllerStream from './ControllerStream.svelte'
   import { AppWebsocket, AdminWebsocket, type AppClient, type AppWebsocketConnectionOptions } from '@holochain/client';
   import '@shoelace-style/shoelace/dist/themes/light.css';
-  import { WeaveClient, isWeContext, initializeHotReload, type Hrl, type WAL } from '@lightningrodlabs/we-applet';
+  import { WeaveClient, isWeaveContext, initializeHotReload, type Hrl, type WAL } from '@theweave/api';
   import "@holochain-open-dev/profiles/dist/elements/profiles-context.js";
   import "@holochain-open-dev/profiles/dist/elements/profile-prompt.js";
   import "@holochain-open-dev/profiles/dist/elements/create-profile.js";
@@ -45,7 +45,7 @@
       }
     }
     let tokenResp
-    if (!isWeContext()) {
+    if (!isWeaveContext()) {
         console.log("adminPort is", adminPort)
         if (adminPort) {
           const url = `ws://localhost:${adminPort}`

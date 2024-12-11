@@ -9,12 +9,12 @@
   import { get } from "svelte/store";
   import SvgIcon from "./SvgIcon.svelte";
   import Confirm from "./Confirm.svelte";
-  import { isWeContext, type WAL } from "@lightningrodlabs/we-applet";
+  import { isWeaveContext, type WAL } from "@theweave/api";
   import type { ZipTestStore } from "./store";
   import { encodeHashToBase64 } from "@holochain/client";
   import type { Stream, Payload, Message } from "./stream";
   import type { AgentPubKey } from "@holochain/client";
-  import { HoloHashMap } from "@holochain-open-dev/utils";
+  import type { HoloHashMap } from "@holochain-open-dev/utils";
   import { hashEqual } from "./util";
 
   const { getStore }: any = getContext("store");
@@ -222,7 +222,7 @@
       {/each}
     </div>
     <div style="display:flex; align-items: center">
-      {#if isWeContext()}
+      {#if isWeaveContext()}
         <sl-button
           on:click={() => walToPocket()}
           style="margin-top: 5px;margin-right: 5px"

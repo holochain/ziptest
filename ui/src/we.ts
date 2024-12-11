@@ -1,5 +1,5 @@
 
-import type { AppletHash, AppletServices, AssetInfo, RecordInfo, WAL, WeaveServices } from '@lightningrodlabs/we-applet';
+import type { AppletHash, AppletServices, AssetInfo, RecordInfo, WAL, WeaveServices } from '@theweave/api';
 import { decodeHashFromBase64, type AppClient } from '@holochain/client';
 import { getMyDna } from './util';
 import { ProfilesClient } from '@holochain-open-dev/profiles';

@@ -8,7 +8,7 @@
     type EntryHash,
   } from "@holochain/client";
   import type { Profile, ProfilesStore } from "@holochain-open-dev/profiles";
-  import type { WeaveClient } from "@lightningrodlabs/we-applet";
+  import type { WeaveClient } from "@theweave/api";
   import StreamPane from "./StreamPane.svelte";
   import type { EntryRecord } from "@holochain-open-dev/utils";
 

@@ -3,7 +3,7 @@
     import { setContext } from 'svelte';
     import { encodeHashToBase64, type AppClient } from '@holochain/client';
     import type { ProfilesStore } from "@holochain-open-dev/profiles";
-    import type { WeaveClient } from '@lightningrodlabs/we-applet';
+    import type { WeaveClient } from '@theweave/api';
     import { getMyDna } from './util';
     import '@shoelace-style/shoelace/dist/components/select/select.js';
     import '@shoelace-style/shoelace/dist/components/option/option.js';
