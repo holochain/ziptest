@@ -32,15 +32,14 @@ jobs:
 
       - name: Retrieve version
         run: |
-          echo "APP_VERSION=$(cat package.json | grep -oP '(?<="version": ")[^"]*')" >> $GITHUB_OUTPUT
+          echo "APP_VERSION=$(cat ./ui/package.json | grep -oP '(?<="version": ")[^"]*')" >> $GITHUB_OUTPUT
           echo "HOLOCHAIN_VERSION=$(holochain --version)" >> $GITHUB_OUTPUT
         id: version
 
       - id: create-release
         uses: ncipollo/release-action@v1
         with:
-          allowUpdates: true
-          artifacts: 'workdir/group.happ'
+          artifacts: ['workdir/ziptest.webhapp', 'workdir/ziptest.happ']
           body: 'See assets below to download and install this version.'
           name: ZipTest v${{ steps.version.outputs.APP_VERSION }} (Holochain ${{ steps.version.outputs.HOLOCHAIN_VERSION }})
           tag: ziptest-v${{ steps.version.outputs.APP_VERSION }}
