@@ -32,8 +32,10 @@ jobs:
 
       - name: Retrieve version
         run: |
+          nix develop
           echo "APP_VERSION=$(cat ./ui/package.json | grep -oP '(?<="version": ")[^"]*')" >> $GITHUB_OUTPUT
           echo "HOLOCHAIN_VERSION=$(holochain --version)" >> $GITHUB_OUTPUT
+          exit
         id: version
 
       - id: create-release
