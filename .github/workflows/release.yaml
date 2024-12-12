@@ -1,0 +1,48 @@
+name: 'release'
+on:
+  push:
+    branches:
+      - release-0.4
+
+jobs:
+  publish-webhapp:
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04
+    outputs:
+      releaseId: ${{ steps.create-release.outputs.id }}
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      # Checks out a copy of your repository on the ubuntu-latest machine
+      - uses: actions/checkout@v3
+
+      - name: Install nix
+        uses: cachix/install-nix-action@v20
+        with:
+          install_url: https://releases.nixos.org/nix/nix-2.23.0/install
+
+      - uses: cachix/cachix-action@v15
+        with:
+          name: holochain-ci
+
+      - name: Install build
+        run: |
+          nix-store --gc
+          nix develop --command bash -c "holochain --version && npm i && npm run package"
+
+      - name: Retrieve version
+        run: |
+          echo "APP_VERSION=$(cat package.json | grep -oP '(?<="version": ")[^"]*')" >> $GITHUB_OUTPUT
+          echo "HOLOCHAIN_VERSION=$(holochain --version)" >> $GITHUB_OUTPUT
+        id: version
+
+      - id: create-release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          artifacts: 'workdir/group.happ'
+          body: 'See assets below to download and install this version.'
+          name: ZipTest v${{ steps.version.outputs.APP_VERSION }} (Holochain ${{ steps.version.outputs.HOLOCHAIN_VERSION }})
+          tag: ziptest-v${{ steps.version.outputs.APP_VERSION }}
+          prerelease: true
+          draft: true
