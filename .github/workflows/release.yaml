@@ -2,7 +2,7 @@ name: 'release'
 on:
   push:
     branches:
-      - release-0.4
+      - release
 
 jobs:
   publish-webhapp:
