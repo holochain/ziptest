@@ -1,29 +1,30 @@
-name: "test"
-on:
-  # Trigger the workflow on push or pull request,
-  # but only for the main branch
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
+## There are no tests so we can ignore this for now
+# name: "test"
+# on:
+#   # Trigger the workflow on push or pull request,
+#   # but only for the main branch
+#   push:
+#     branches: [ main, develop ]
+#   pull_request:
+#     branches: [ main, develop ]
 
-jobs:
-  testbuild:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+# jobs:
+#   testbuild:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v3
 
-      - name: Install nix
-        uses: cachix/install-nix-action@v20
-        with:
-          install_url: https://releases.nixos.org/nix/nix-2.23.0/install
+#       - name: Install nix
+#         uses: cachix/install-nix-action@v20
+#         with:
+#           install_url: https://releases.nixos.org/nix/nix-2.23.0/install
 
-      - uses: cachix/cachix-action@v15
-        with:
-          name: holochain-ci
+#       - uses: cachix/cachix-action@v15
+#         with:
+#           name: holochain-ci
 
-      - name: Install and test
-        run: |
-          nix-store --gc
-          nix develop --command bash -c "npm i && npm t"
+#       - name: Install and test
+#         run: |
+#           nix-store --gc
+#           nix develop --command bash -c "npm i && npm t"
 

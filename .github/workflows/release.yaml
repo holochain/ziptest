@@ -43,5 +43,5 @@ jobs:
           body: 'See assets below to download and install this version.'
           name: ZipTest v${{ steps.version.outputs.APP_VERSION }} (Holochain ${{ steps.version.outputs.HOLOCHAIN_VERSION }})
           tag: ziptest-v${{ steps.version.outputs.APP_VERSION }}
-          prerelease: true
-          draft: true
+          prerelease: false
+          draft: false
