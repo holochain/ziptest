@@ -39,9 +39,7 @@ jobs:
       - id: create-release
         uses: ncipollo/release-action@v1
         with:
-          artifacts:
-            - 'workdir/ziptest.webhapp'
-            - 'workdir/ziptest.happ'
+          artifacts: 'workdir/ziptest.webhapp,workdir/ziptest.happ'
           body: 'See assets below to download and install this version.'
           name: ZipTest v${{ steps.version.outputs.APP_VERSION }} (Holochain ${{ steps.version.outputs.HOLOCHAIN_VERSION }})
           tag: ziptest-v${{ steps.version.outputs.APP_VERSION }}
