@@ -1,7 +1,7 @@
 [package]
 edition = "2021"
 name = "ziptest"
-version = "0.0.2"
+version = "0.0.3"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -10,4 +10,4 @@ name = "ziptest"
 [dependencies]
 hdk = { workspace = true }
 serde = { workspace = true }
-ziptest_integrity = { workspace = true } 
+ziptest_integrity = { workspace = true }
