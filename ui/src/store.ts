@@ -253,7 +253,6 @@ export class ZipTestStore {
             }
 
         })
-
         getMyDna(roleName, clientIn).then(res=>{
             this.dnaHash = res
           })
