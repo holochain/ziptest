@@ -1,96 +1,104 @@
 <script lang="ts">
-    import { ZipTestStore } from './store'
-    import { setContext } from 'svelte';
-    import { encodeHashToBase64, type AppClient } from '@holochain/client';
-    import type { ProfilesStore } from "@holochain-open-dev/profiles";
-    import type { WeaveClient } from '@theweave/api';
-    import { getMyDna } from './util';
-    import '@shoelace-style/shoelace/dist/components/select/select.js';
-    import '@shoelace-style/shoelace/dist/components/option/option.js';
+  import { ZipTestStore } from "./store";
+  import { setContext } from "svelte";
+  import { encodeHashToBase64, type AppClient } from "@holochain/client";
+  import type { ProfilesStore } from "@holochain-open-dev/profiles";
+  import type { WeaveClient } from "@theweave/api";
+  import { getMyDna } from "./util";
+  import "@shoelace-style/shoelace/dist/components/select/select.js";
+  import "@shoelace-style/shoelace/dist/components/option/option.js";
 
-    export let roleName = ""
-    export let client : AppClient
-    export let weaveClient : WeaveClient
-    export let profilesStore : ProfilesStore
-    export let view
+  export let roleName = "";
+  export let client: AppClient;
+  export let weaveClient: WeaveClient;
+  export let profilesStore: ProfilesStore;
+  export let view;
 
-    let store: ZipTestStore = new ZipTestStore (
-      weaveClient,
-      profilesStore,
-      client,
-      roleName,
-    );
+  let store: ZipTestStore = new ZipTestStore(
+    weaveClient,
+    profilesStore,
+    client,
+    roleName
+  );
 
-
-    setContext('store', {
-      getStore: () => store,
-    });
-  let inputElement
-  let thingElement
-  let disabled = true
-  $: thingsList = store.thingsList
-
+  setContext("store", {
+    getStore: () => store,
+  });
+  let inputElement;
+  let thingElement;
+  let disabled = true;
+  $: thingsList = store.thingsList;
 </script>
-  <div class="flex-scrollable-parent">
-    <div class="flex-scrollable-container">
-      <div class='app'>
 
-      <div class="wrapper" >
-
-      <div class="workspace" style=" display:flex; flex-direction:column;padding:20px;">
-        <sl-select
-          hoist
-          placeholder="Thing"
-          bind:this={thingElement}
-          on:sl-input={(e)=>disabled = !e.target.value || !inputElement.value}
+<div class="flex-scrollable-parent">
+  <div class="flex-scrollable-container">
+    <div class="app">
+      <div class="wrapper">
+        <div
+          class="workspace"
+          style=" display:flex; flex-direction:column;padding:20px;"
+        >
+          <sl-select
+            hoist
+            placeholder="Thing"
+            bind:this={thingElement}
+            on:sl-input={(e) =>
+              (disabled = !e.target.value || !inputElement.value)}
           >
-          {#if $thingsList.status == "complete"}
-            {#each $thingsList.value as thing}
-            <sl-option 
-              value={encodeHashToBase64(thing.originalHash)}
-            >
-              {thing.content}
-            </sl-option>
-            {/each}
-          {:else}
-          loading
-          {/if}
-        </sl-select>
-        <sl-input bind:this={inputElement}
-          on:sl-input={(e)=>disabled = !e.target.value || !thingElement.value}
-          placeholder="Game Name"
-          style="margin-top:5px;"
+            {#if $thingsList.status == "complete"}
+              {#each $thingsList.value as thing}
+                <sl-option value={encodeHashToBase64(thing.originalHash)}>
+                  {thing.content}
+                </sl-option>
+              {/each}
+            {:else}
+              loading
+            {/if}
+          </sl-select>
+          <sl-input
+            bind:this={inputElement}
+            on:sl-input={(e) =>
+              (disabled = !e.target.value || !thingElement.value)}
+            placeholder="Game Name"
+            style="margin-top:5px;"
           ></sl-input>
           <div style="margin-top:10px;display:flex;justify-content:flex-end">
-            <sl-button on:click={()=>{
-              view.cancel()
-            }}>Cancel</sl-button>
-            <sl-button 
+            <sl-button
+              on:click={() => {
+                view.cancel();
+              }}>Cancel</sl-button
+            >
+            <sl-button
               style="margin-left:10px;"
               variant="primary"
-              disabled={disabled}
-              on:click={async ()=>{
-              if ($thingsList.status == "complete") {
-                try {
-                  const defHashB64 = thingElement.value
-                  const thingContent = Array.from($thingsList.value).find(def=>encodeHashToBase64(def.originalHash)==defHashB64)
-                  console.log("FIXME!!")
-                  const dnaHash = await getMyDna(roleName, client)
-                  view.resolve({hrl:[dnaHash, thing.hash]})
-                } catch(e) {
-                  console.log("ERR",e)
-                  view.reject(e)
+              {disabled}
+              on:click={async () => {
+                if ($thingsList.status == "complete") {
+                  try {
+                    const defHashB64 = thingElement.value;
+                    const thingContent = Array.from($thingsList.value).find(
+                      (def) =>
+                        encodeHashToBase64(def.originalHash) == defHashB64
+                    );
+                    console.log("FIXME!!");
+                    const dnaHash = await getMyDna(roleName, client);
+                    view.resolve({ hrl: [dnaHash, thing.hash] });
+                  } catch (e) {
+                    console.log("ERR", e);
+                    view.reject(e);
+                  }
+                } else {
+                  console.log("click before defs loaded");
                 }
-              } else {
-                console.log("click before defs loaded")
-              }
-            }}>Create</sl-button>
+              }}>Create</sl-button
+            >
           </div>
         </div>
-        </div>
+      </div>
     </div>
   </div>
 </div>
+
 <style>
   .app {
     margin: 0;
@@ -115,12 +123,20 @@
     }
   }
   @-webkit-keyframes spin {
-    0% { -webkit-transform: rotate(0deg); }
-    100% { -webkit-transform: rotate(360deg); }
+    0% {
+      -webkit-transform: rotate(0deg);
+    }
+    100% {
+      -webkit-transform: rotate(360deg);
+    }
   }
   @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
   }
   .flex-scrollable-parent {
     position: relative;
@@ -139,5 +155,4 @@
     position: relative;
     z-index: 10;
   }
-
 </style>

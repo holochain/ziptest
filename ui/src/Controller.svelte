@@ -81,7 +81,6 @@
   let streams: { [key: string]: StreamDef } = {};
   let currentStream: string | undefined = undefined;
   $: liveStreams = store.streams;
-
 </script>
 
 <div class="flex-scrollable-parent">
@@ -91,12 +90,24 @@
         <AboutDialog bind:this={aboutDialog} />
         <div style="display:flex; background-color: #eee;">
           <SvgIcon icon="ziptest"></SvgIcon>
-          <div class="test-type" class:selected={currentStream=="_"} on:click={()=>currentStream="_"}><span style="font-weight:bold;font-size:110%">Entries</span></div>
-          <div class="test-type" class:selected={currentStream!="_"} on:click={()=>currentStream=""}><span style="font-weight:bold;font-size:110%">Signals</span></div>
+          <div
+            class="test-type"
+            class:selected={currentStream == "_"}
+            on:click={() => (currentStream = "_")}
+          >
+            <span style="font-weight:bold;font-size:110%">Entries</span>
+          </div>
+          <div
+            class="test-type"
+            class:selected={currentStream != "_"}
+            on:click={() => (currentStream = "")}
+          >
+            <span style="font-weight:bold;font-size:110%">Signals</span>
+          </div>
         </div>
 
         <div class="main-pane">
-          {#if currentStream!="_"}
+          {#if currentStream != "_"}
             <div class="people flex-scrollable-y">
               <div
                 class="person"
@@ -206,7 +217,8 @@
                         agent-pub-key={hb64}
                       ></agent-avatar>
                     </div>
-                    <span style="margin-left:5px">{profile.entry.nickname}</span>
+                    <span style="margin-left:5px">{profile.entry.nickname}</span
+                    >
 
                     {#if !selected && (streams[thisUserStreamId] ? streams[thisUserStreamId].lastSeenActivity : 0) < $lastActivity[thisUserStreamId]}
                       <span style="color:red;margin-left:5px">●</span>
@@ -264,7 +276,7 @@
               {/each}
             </div>
           {/if}
-          {#if currentStream == "_"} 
+          {#if currentStream == "_"}
             <div class="entries">
               <ThingsPane></ThingsPane>
             </div>
@@ -304,8 +316,8 @@
                   <h3>Things:</h3>
                   {#if $thingHashes.status == "complete"}
                     {#each $thingHashes.value as hash}
-                      <ThingItem 
-                        on:create={ 
+                      <ThingItem
+                        on:create={
                           async (e) => {
                             console.log("CREATING")
                           }
@@ -317,12 +329,12 @@
                         }
                         thingHash={hash}>
                       </ThingItem>
-        
+
                     {/each}
                   {:else if $thingHashes.status == "error"}
                     Error!: {$thingHashes.error}
                   {/if}
-      
+
                 </div>
                 {/if}
                 <div class="new-type">
@@ -347,7 +359,7 @@
                     title="Import Game"
                     >Import <SvgIcon icon=faFileImport size="16" /></sl-button
                   >
-                  
+
                 </div>
               </div>
             </div> -->
@@ -373,7 +385,8 @@
     border: solid 1px darkgray;
     cursor: pointer;
   }
-  .test-type:hover, .selected {
+  .test-type:hover,
+  .selected {
     background-color: white;
   }
   .footer {

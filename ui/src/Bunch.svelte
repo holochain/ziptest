@@ -77,13 +77,13 @@
     bunchRecord = await store.client.getThing(bunchHash);
     bunchContent = JSON.parse(bunchRecord.entry.content);
     const things = await store.client.getThings(bunch);
-    if (things.length >0) {
+    if (things.length > 0) {
       moments.unshift(things.length);
       moments = moments;
-      initialFound = "found"
+      initialFound = "found";
       expected = bunchContent.count * bunchContent.reps;
     } else {
-      initialFound = "notFound"
+      initialFound = "notFound";
     }
   });
   onDestroy(() => {
@@ -97,42 +97,45 @@
   {#if bunchRecord}
     <div class="bunch-content">
       {#if initialFound === undefined}
-        <sl-skeleton effect="pulse" style="height: 10px; width: 100%"></sl-skeleton>
+        <sl-skeleton effect="pulse" style="height: 10px; width: 100%"
+        ></sl-skeleton>
       {:else if initialFound === "found"}
         Expected: {expected}; Total found: {moments[0]}
-        {#if moments[0] < expected }
+        {#if moments[0] < expected}
           <sl-button
-          on:click={()=>{
-            initialFound = ""
-            runGraph()
-          }}
-          >Watch Test</sl-button>
+            on:click={() => {
+              initialFound = "";
+              runGraph();
+            }}>Watch Test</sl-button
+          >
         {/if}
       {:else if initialFound === "notFound"}
-        <div>Reps: {bunchContent.reps}; Count: {bunchContent.count}; Delay: {bunchContent.delay}</div>
+        <div>
+          Reps: {bunchContent.reps}; Count: {bunchContent.count}; Delay: {bunchContent.delay}
+        </div>
         {#if hashEqual(bunchRecord.action.author, store.myAgentPubKey)}
           <sl-button
-            on:click={()=>{
-              creatingThings = true
-              initialFound = ""
-              runGraph()
-              createThings()
-            }}
-          >Start Test</sl-button>
+            on:click={() => {
+              creatingThings = true;
+              initialFound = "";
+              runGraph();
+              createThings();
+            }}>Start Test</sl-button
+          >
         {:else}
           <sl-button
-          on:click={()=>{
-            initialFound = ""
-            runGraph()
-          }}
-          >Watch Test</sl-button>
+            on:click={() => {
+              initialFound = "";
+              runGraph();
+            }}>Watch Test</sl-button
+          >
         {/if}
       {:else}
         {#if allFound}
           All {expected} entries found after {seconds} seconds.
         {:else}
           {#if creatingThings}
-          <div>Create Count: {creatingCount}</div>
+            <div>Create Count: {creatingCount}</div>
           {/if}
           <div>Seconds elapsed: {seconds}</div>
         {/if}

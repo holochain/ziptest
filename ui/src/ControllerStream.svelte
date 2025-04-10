@@ -42,9 +42,9 @@
     return profiles;
   };
 
-  const hashes = (streamProfiles:[Uint8Array, EntryRecord<Profile>][]) => {
+  const hashes = (streamProfiles: [Uint8Array, EntryRecord<Profile>][]) => {
     if (streamId === "_all") {
-      return streamProfiles.map(([k,_])=>k);
+      return streamProfiles.map(([k, _]) => k);
     } else {
       return JSON.parse(streamId)
         .filter((a) => a != store.myAgentPubKeyB64)
@@ -52,7 +52,10 @@
     }
   };
 
-  const getNickname = (streamProfiles: [Uint8Array, EntryRecord<Profile>][], aB64: string) => {
+  const getNickname = (
+    streamProfiles: [Uint8Array, EntryRecord<Profile>][],
+    aB64: string
+  ) => {
     if (streamProfiles) {
       const idx = streamProfiles.findIndex(
         ([h, _]) => h && encodeHashToBase64(h) == aB64
@@ -77,8 +80,8 @@
       <div class="main-pane">
         {#if store && $liveStreams[streamId] && $allProfiles.status === "complete"}
           {@const streamProfiles = getAllStreamProfiles($allProfiles.value)}
-          {@const allAgentKeys = hashes(streamProfiles)} 
-          {#if streamId !== "_all" && Array.from($allProfiles.value.keys()).findIndex(k=>encodeHashToBase64(k) === store.myAgentPubKeyB64) == -1}
+          {@const allAgentKeys = hashes(streamProfiles)}
+          {#if streamId !== "_all" && Array.from($allProfiles.value.keys()).findIndex((k) => encodeHashToBase64(k) === store.myAgentPubKeyB64) == -1}
             <p style="margin:auto">This stream doesn't include you!</p>
           {:else}
             <div class="whom">
