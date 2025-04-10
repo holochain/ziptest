@@ -65,8 +65,8 @@
   }
 
   const bunch2BunchName = (bunch) => {
-    const [agent, timestamp] = bunch.split(".")
-    const date = new Date(parseInt(timestamp))
+    const [agent, timestamp] = bunch.split(".");
+    const date = new Date(parseInt(timestamp));
     return `${agent}:${date.toISOString()}`;
   };
 
@@ -125,7 +125,7 @@
           {@const bunch = tag2Bunch(link.tag)}
           <div
             class="bunch-item"
-            class:selected={bunch==activeBunch}
+            class:selected={bunch == activeBunch}
             on:click={() => {
               if (bunch != activeBunch) {
                 activeBunch = bunch;
@@ -158,7 +158,6 @@
     padding-left: 10px;
     display: flex;
     flex-direction: column;
-
   }
   .bunches {
     display: flex;

@@ -49,10 +49,8 @@
   //@ts-ignore
   $: myProfile = get(store.profilesStore.myProfile).value;
 
-  onMount(async () => {
-  });
-  onDestroy(() => {
-  });
+  onMount(async () => {});
+  onDestroy(() => {});
 
   let inputSecondsElement;
 
@@ -62,29 +60,42 @@
   ) => {
     const sources: { [key: string]: Results } = {};
 
-    const seconds = inputSecondsElement ? parseInt(inputSecondsElement.value?inputSecondsElement.value : 60) : 60
+    const seconds = inputSecondsElement
+      ? parseInt(inputSecondsElement.value ? inputSecondsElement.value : 60)
+      : 60;
 
     messages.forEach((m) => {
       if (m.payload.type == "Msg") {
-        const iAmSender = hashEqual(m.from, store.myAgentPubKey)
-        const [test, delay, expected, count, agents] = m.payload.text.split(".");
+        const iAmSender = hashEqual(m.from, store.myAgentPubKey);
+        const [test, delay, expected, count, agents] =
+          m.payload.text.split(".");
         const r = sources[test];
-        const countInt = parseInt(count)
-        const delayInt = parseInt(delay)
-        const expectedInt = parseInt(expected)
-        const agentsInt = parseInt(agents)
+        const countInt = parseInt(count);
+        const delayInt = parseInt(delay);
+        const expectedInt = parseInt(expected);
+        const agentsInt = parseInt(agents);
         const results: Results = r
           ? r
-          : { expected: iAmSender ? expectedInt*agentsInt : expectedInt ,delay:delayInt,count: 1, acks: 0, from: m.from, agents:agentsInt, graph:[] };
+          : {
+              expected: iAmSender ? expectedInt * agentsInt : expectedInt,
+              delay: delayInt,
+              count: 1,
+              acks: 0,
+              from: m.from,
+              agents: agentsInt,
+              graph: [],
+            };
         if (r) {
           results.count += iAmSender ? agentsInt : 1;
         }
         if (iAmSender) {
           results.acks += getAckCount(acks, m.payload.created);
         }
-        const signalAt = countInt*delayInt
-        const index = Math.trunc(signalAt/(1000*seconds))
-        results.graph[index] = !results.graph[index] ? 1 : results.graph[index]+1
+        const signalAt = countInt * delayInt;
+        const index = Math.trunc(signalAt / (1000 * seconds));
+        results.graph[index] = !results.graph[index]
+          ? 1
+          : results.graph[index] + 1;
         sources[test] = results;
       }
     });
@@ -110,18 +121,18 @@
     currentTest = `${now.getTime()}`;
     currentTestExpected = parseInt(inputCountElement.value);
     currentTestDelay = parseInt(inputDelayElement.value);
-    currentTestCount = 0
+    currentTestCount = 0;
     await sendMessage();
   };
   const sendMessage = async () => {
     setTimeout(() => {
       if (currentTest) {
         _sendMessage();
-        currentTestCount+=1;
+        currentTestCount += 1;
         if (currentTestCount < currentTestExpected && currentTest) {
           sendMessage();
         } else {
-          currentTest = ""
+          currentTest = "";
         }
       }
     }, currentTestDelay);
@@ -146,7 +157,6 @@
     return 0;
   };
   let confirmDialog;
- 
 
   let showRecipients = 0;
 </script>
@@ -175,24 +185,23 @@
             bind:this={inputDelayElement}
             label="Delay"
           ></sl-input>
-      
-          <sl-button style="margin-left:10px;"  on:click={startTest}
+
+          <sl-button style="margin-left:10px;" on:click={startTest}
             >Start Test
           </sl-button>
         {:else}
-        Current Count: {currentTestCount} of {currentTestExpected} (delay {currentTestDelay})
-          <sl-button style="margin-left:10px;" disabled={!currentTest} on:click={()=>currentTest=""}
+          Current Count: {currentTestCount} of {currentTestExpected} (delay {currentTestDelay})
+          <sl-button
+            style="margin-left:10px;"
+            disabled={!currentTest}
+            on:click={() => (currentTest = "")}
             >Cancel Test
           </sl-button>
         {/if}
-          
       </div>
       Graph Unit (seconds)
-      <sl-input
-            style="width:60px"
-            value={60}
-            bind:this={inputSecondsElement}
-          ></sl-input> 
+      <sl-input style="width:60px" value={60} bind:this={inputSecondsElement}
+      ></sl-input>
       {#each Object.entries(sources).reverse() as [test, results]}
         <div style="display:flex">
           <agent-avatar
@@ -200,7 +209,9 @@
             size={18}
             agent-pub-key={encodeHashToBase64(results.from)}
           ></agent-avatar>
-          <span style="padding-left:5px;padding-right:5px;">{(new Date(parseInt(test)) ).toISOString()} (delay {results.delay}): </span>
+          <span style="padding-left:5px;padding-right:5px;"
+            >{new Date(parseInt(test)).toISOString()} (delay {results.delay}):
+          </span>
 
           {#if hashEqual(results.from, store.myAgentPubKey)}
             {results.count} of {results.expected} sent with {results.acks} acks ({(
@@ -216,7 +227,7 @@
         </div>
         <div class="graph">
           {#each results.graph as count}
-            <div  class="bar" style={`height:${count*5}px; ;width:4px`}> </div>
+            <div class="bar" style={`height:${count * 5}px; ;width:4px`}></div>
           {/each}
         </div>
       {/each}
@@ -249,13 +260,10 @@
       {/each} -->
     </div>
   </div>
-
-
 </div>
 
 <style>
-
- .graph {
+  .graph {
     display: flex;
     align-items: end;
     width: 800px;

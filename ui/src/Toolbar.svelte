@@ -4,24 +4,34 @@
   import AboutDialog from "./AboutDialog.svelte";
   import type { ProfilesStore } from "@holochain-open-dev/profiles";
   import SvgIcon from "./SvgIcon.svelte";
-  import type { ZipTestStore } from './store';
+  import type { ZipTestStore } from "./store";
   import { getContext } from "svelte";
-  const { getStore } :any = getContext('store');
-  const store:ZipTestStore = getStore();
+  const { getStore }: any = getContext("store");
+  const store: ZipTestStore = getStore();
 
-  let aboutDialog
-  $:bugColor = "color: #5536f9"
+  let aboutDialog;
+  $: bugColor = "color: #5536f9";
 </script>
 
-  <AboutDialog bind:this={aboutDialog} />
-<div class='toolbar'>
+<AboutDialog bind:this={aboutDialog} />
+<div class="toolbar">
   <div class="left-items">
-    <div class="logo" title="About ZipTest!" on:click={()=>aboutDialog.open()}><LogoIcon /></div>
+    <div
+      class="logo"
+      title="About ZipTest!"
+      on:click={() => aboutDialog.open()}
+    >
+      <LogoIcon />
+    </div>
   </div>
   <div class="right-items">
     <Folk></Folk>
-    <a href="https://github.com/holochain-apps/ziptest/issues" title="Report a problem in our GitHub repo" target="_blank">
-      <div class="nav-button"><SvgIcon icon=faBug size=16 /></div>
+    <a
+      href="https://github.com/holochain-apps/ziptest/issues"
+      title="Report a problem in our GitHub repo"
+      target="_blank"
+    >
+      <div class="nav-button"><SvgIcon icon="faBug" size="16" /></div>
     </a>
   </div>
 </div>
