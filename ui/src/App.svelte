@@ -19,7 +19,7 @@
   const url = `ws://localhost:${appPort}`;
 
   let client: AppWebsocket
-  let weaveClient: WeaveClient  
+  let weaveClient: WeaveClient
   let profilesStore : ProfilesStore|undefined = undefined
 
   let connected = false
@@ -63,7 +63,7 @@
         if (tokenResp) params.token = tokenResp.token
         client = await AppWebsocket.connect(params)
         profilesClient = new ProfilesClient(client, appId);
-    } 
+    }
     else {
       weaveClient = await WeaveClient.connect(appletServices);
 
@@ -94,7 +94,7 @@
               throw new Error("Unsupported applet-view type");
           }
           break;
-        case "cross-applet-view":
+        case "cross-group-view":
           switch (this.weaveClient.renderInfo.view.type) {
             case "main":
               // here comes your rendering logic for the cross-applet main view
@@ -147,7 +147,7 @@
 
   </profiles-context>
 {:else}
-  <div class="loading"><div class="loader"></div></div> 
+  <div class="loading"><div class="loader"></div></div>
 {/if}
 
 <style>
