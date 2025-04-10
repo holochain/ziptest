@@ -32,7 +32,7 @@
     ></sl-skeleton>
   {:else if $profile.status == "complete"}
     {#if showAvatar}
-      {#if placeholder && !$profile.value.entry.fields.avatar}
+      {#if placeholder && !$profile.value?.entry.fields.avatar}
         <SvgIcon
           icon="faUser"
           size={`${size}`}

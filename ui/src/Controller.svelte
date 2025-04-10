@@ -1,21 +1,18 @@
+<!-- svelte-ignore a11y-click-events-have-key-events -->
 <script lang="ts">
   import { ZipTestStore } from "./store";
-  import { onMount, setContext } from "svelte";
-  import type { AppClient, EntryHash } from "@holochain/client";
+  import { setContext } from "svelte";
+  import type { AppClient } from "@holochain/client";
   import type { Profile, ProfilesStore } from "@holochain-open-dev/profiles";
   import SvgIcon from "./SvgIcon.svelte";
-  import Avatar from "./Avatar.svelte";
   import StreamPane from "./StreamPane.svelte";
   import ThingsPane from "./ThingsPane.svelte";
-  import ThingItem from "./ThingItem.svelte";
   import type { WeaveClient } from "@theweave/api";
   import { decodeHashFromBase64, encodeHashToBase64 } from "@holochain/client";
   import type { AgentPubKey } from "@holochain/client";
   import { EntryRecord, HoloHashMap } from "@holochain-open-dev/utils";
   import "@holochain-open-dev/profiles/dist/elements/agent-avatar.js";
   import AboutDialog from "./AboutDialog.svelte";
-  import { time } from "./util";
-  import { allRevisionsOfEntryStore } from "@holochain-open-dev/stores";
 
   export let roleName = "";
   export let client: AppClient;
