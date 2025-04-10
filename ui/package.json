@@ -36,6 +36,7 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^2.0.2",
+    "vite-plugin-static-copy": "0.16.0",
     "@tsconfig/svelte": "^3.0.0",
     "bestzip": "^2.2.0",
     "svelte": "^3.55.1",
