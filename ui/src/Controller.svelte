@@ -38,6 +38,8 @@
   });
 
   let interval;
+  
+
   const setupPing = (
     allProfiles: ReadonlyMap<Uint8Array, EntryRecord<Profile>>
   ) => {
@@ -78,7 +80,36 @@
   let streams: { [key: string]: StreamDef } = {};
   let currentStream: string | undefined = undefined;
   $: liveStreams = store.streams;
+
+  let count = 0
+  let networkStats
+
+  const getNetworkStats = async () => {
+    stats = ""+new Date
+    networkStats = await client.dumpNetworkStats()
+    // console.log("Start")
+    // const x = await client.dumpNetworkMetrics()
+    // console.log("Complete")
+  }
+  const toggleStats = () => {
+    if (statsInterval) {
+      clearInterval(statsInterval);
+      statsInterval = undefined
+      stats = ""
+      networkStats = undefined
+    } else {
+      getNetworkStats()
+
+      statsInterval = setInterval(async () => {
+        await getNetworkStats()
+    }, 5000);
+    }
+  }
+  let stats =""
+  let statsInterval
+
 </script>
+
 
 <div class="flex-scrollable-parent">
   <div class="flex-scrollable-container">
@@ -297,6 +328,22 @@
             </div>
           {/if}
         </div>
+        <div class="stats {networkStats ? "stats-polling":""}">
+          <span class="pill-button" style="width:fit-content" on:click={() => toggleStats()}
+            >{#if !networkStats}Start{:else}Stop{/if} Stats Polling</span
+          >
+          {#if networkStats}
+            <h3>{stats}</h3>
+            <h4>Peer Urls: {networkStats.peer_urls.length}</h4>
+            {#each networkStats.peer_urls as url}
+            <li>{url}</li>
+            {/each}
+            <h4>Connections: {networkStats.connections.length}</h4>
+              {#each networkStats.connections as connection}
+              <li>{JSON.stringify(connection)}</li>
+            {/each}
+          {/if}
+          </div>
         <div class="footer">
           <span><SvgIcon icon="ziptest"></SvgIcon></span>
           ZipTest
@@ -467,6 +514,7 @@
     display: flex;
     flex: 1;
     flex-direction: row;
+    height:80%;
   }
   .people {
     display: flex;
@@ -493,4 +541,13 @@
     display: flex;
     width: 100%;
   }
+  .stats {
+    border-top: solid 1px black;
+    padding: 10px;
+  }
+  .stats-polling {
+    height: 300px;
+
+  }
+
 </style>
