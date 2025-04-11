@@ -83,13 +83,14 @@
 
   let count = 0
   let networkStats
+  let networkMetrics
 
   const getNetworkStats = async () => {
     stats = ""+new Date
     networkStats = await client.dumpNetworkStats()
-    // console.log("Start")
-    // const x = await client.dumpNetworkMetrics()
-    // console.log("Complete")
+    networkMetrics = await client.dumpNetworkMetrics({
+      include_dht_summary: true,
+    })
   }
   const toggleStats = () => {
     if (statsInterval) {
@@ -134,7 +135,7 @@
           </div>
         </div>
 
-        <div class="main-pane">
+        <div class="main-pane {networkStats ? "main-pane-polling":""}">
           {#if currentStream != "_"}
             <div class="people flex-scrollable-y">
               <div
@@ -342,6 +343,8 @@
               {#each networkStats.connections as connection}
               <li>{JSON.stringify(connection)}</li>
             {/each}
+            <h4>Metrics:</h4>
+            {JSON.stringify(networkMetrics)}
           {/if}
           </div>
         <div class="footer">
@@ -512,9 +515,11 @@
   }
   .main-pane {
     display: flex;
-    flex: 1;
     flex-direction: row;
-    height:80%;
+    height: calc(100vh - 110px);
+  }
+  .main-pane-polling {
+    height: calc(100vh - 350px);
   }
   .people {
     display: flex;
@@ -541,9 +546,13 @@
     display: flex;
     width: 100%;
   }
+  .stats .pill-button {
+    float: right;
+  }
   .stats {
     border-top: solid 1px black;
     padding: 10px;
+    overflow: auto;
   }
   .stats-polling {
     height: 300px;
