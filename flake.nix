@@ -2,7 +2,7 @@
   description = "Flake for Holochain app development";
 
   inputs = {
-    holonix.url = "github:holochain/holonix?ref=main";
+    holonix.url = "github:holochain/holonix?ref=main-0.5";
 
     nixpkgs.follows = "holonix/nixpkgs";
     flake-parts.follows = "holonix/flake-parts";
@@ -20,6 +20,7 @@
           holochain
           bootstrap-srv
           lair-keystore
+          hc
           hc-launch
           hc-scaffold
           hn-introspect

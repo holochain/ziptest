@@ -33,7 +33,7 @@
       hrl: [store.dnaHash, nullHash],
       context: stream.id,
     };
-    store.weaveClient?.walToPocket(attachment);
+    store.weaveClient?.assets.assetToPocket(attachment)
   };
 
   type Results = {
@@ -279,6 +279,7 @@
     flex-direction: column;
     background-color: lightgoldenrodyellow;
     width: 100%;
+    overflow: auto;
   }
   .header {
     display: flex;

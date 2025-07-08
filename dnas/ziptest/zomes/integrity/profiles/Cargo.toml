@@ -10,3 +10,4 @@ name = "profiles_integrity"
 
 [dependencies]
 hc_zome_profiles_integrity = { git = "https://github.com/holochain-open-dev/profiles", branch = "main-0.5" }
+holochain_serialized_bytes = { workspace = true }

@@ -1,7 +1,7 @@
 [package]
 edition = "2021"
 name = "ziptest_integrity"
-version = "0.0.2"
+version = "0.0.3"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -10,3 +10,4 @@ name = "ziptest_integrity"
 [dependencies]
 hdi = { workspace = true }
 serde = { workspace = true }
+holochain_serialized_bytes = { workspace = true }
