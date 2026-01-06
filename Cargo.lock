@@ -761,7 +761,7 @@ dependencies = [
 
 [[package]]
 name = "profiles"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "hc_zome_profiles_coordinator",
  "holochain_serialized_bytes",
@@ -769,7 +769,7 @@ dependencies = [
 
 [[package]]
 name = "profiles_integrity"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "hc_zome_profiles_integrity",
  "holochain_serialized_bytes",
@@ -1244,7 +1244,7 @@ checksum = "f17a85883d4e6d00e8a97c586de764dabcc06133f7f1d55dce5cdc070ad7fe59"
 
 [[package]]
 name = "ziptest"
-version = "0.0.3"
+version = "0.1.0"
 dependencies = [
  "hdk",
  "holochain_serialized_bytes",
@@ -1254,7 +1254,7 @@ dependencies = [
 
 [[package]]
 name = "ziptest_integrity"
-version = "0.0.3"
+version = "0.1.0"
 dependencies = [
  "hdi",
  "holochain_serialized_bytes",

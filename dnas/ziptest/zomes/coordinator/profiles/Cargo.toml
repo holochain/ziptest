@@ -2,7 +2,7 @@
 authors = ["guillem.cordoba@gmail.com"]
 edition = "2021"
 name = "profiles"
-version = "0.0.1"
+version = "0.1.0"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
