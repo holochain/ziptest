@@ -3,6 +3,7 @@ pub mod utils;
 use ziptest_integrity::*;
 
 use hdk::prelude::*;
+use std::collections::HashSet;
 
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -45,7 +46,7 @@ fn recv_remote_signal(message: Message) -> ExternResult<()> {
 #[hdk_extern]
 pub fn init(_: ()) -> ExternResult<InitCallbackResult> {
 
-    let mut fns = BTreeSet::new();
+    let mut fns = HashSet::new();
     fns.insert((zome_info()?.name, "recv_remote_signal".into()));
     let functions = GrantedFunctions::Listed(fns);
     create_cap_grant(CapGrantEntry {

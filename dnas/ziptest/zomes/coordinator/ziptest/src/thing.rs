@@ -47,8 +47,8 @@ pub fn create_thing(input: CreateThingInput) -> ExternResult<Vec<Record>> {
 
 #[hdk_extern]
 pub fn get_thing(original_thing_hash: ActionHash) -> ExternResult<Option<Record>> {
-    let input = GetLinksInputBuilder::try_new(original_thing_hash.clone(), LinkTypes::ThingUpdates)?.build();
-    let links = get_links(input)?;
+    let query = LinkQuery::try_new(original_thing_hash.clone(), LinkTypes::ThingUpdates)?;
+    let links = get_links(query, GetStrategy::default())?;
     let latest_link = links
         .into_iter()
         .max_by(|link_a, link_b| link_a.timestamp.cmp(&link_b.timestamp));
@@ -93,7 +93,7 @@ pub fn delete_thing(original_thing_hash: ActionHash) -> ExternResult<ActionHash>
 #[hdk_extern]
 pub fn get_things(bunch: String) -> ExternResult<Vec<Link>> {
     let path = Path::from(bunch.clone());
-    let input = GetLinksInputBuilder::try_new(path.path_entry_hash()?, LinkTypes::AllThings)?.build();
-    let links = get_links(input)?;
+    let query = LinkQuery::try_new(path.path_entry_hash()?, LinkTypes::AllThings)?;
+    let links = get_links(query, GetStrategy::default())?;
     Ok(links)
 }

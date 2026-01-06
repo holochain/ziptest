@@ -347,7 +347,7 @@
               {/if}
             </div>
           </Pane>
-          <Pane style="min-height:40px" maxSize={networkStatsOpen ? 95 : 10} minSize={10} size={networkStatsOpen? 50 : 10}>
+          <Pane maxSize={networkStatsOpen ? 95 : 10} minSize={10} size={networkStatsOpen? 50 : 10}>
             <div class="stats {networkStatsOpen ? 'stats-polling' : ''}">
           <span
             class="pill-button"

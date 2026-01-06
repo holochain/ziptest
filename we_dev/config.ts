@@ -3,7 +3,7 @@ import { defineConfig } from '@theweave/cli';
 export default defineConfig({
   toolCurations: [
     {
-      url: 'https://raw.githubusercontent.com/lightningrodlabs/weave-tool-curation/refs/heads/test-0.13/0.13/lists/curations-0.13.json',
+      url: 'https://raw.githubusercontent.com/lightningrodlabs/weave-tool-curation/refs/heads/test-0.14/0.14/lists/curations-0.14.json',
       useLists: ['default'],
     },
   ],
@@ -94,7 +94,7 @@ export default defineConfig({
         },
         source: {
           type: "https",
-          url: "https://github.com/holochain-apps/kando/releases/download/v0.13.0-rc.0/kando.webhapp"
+          url: "https://github.com/holochain-apps/kando/releases/download/v0.16.0/kando.webhapp"
         },
       },
     //   {

@@ -1,5 +1,5 @@
 ---
-manifest_version: "1"
+manifest_version: "0"
 name: ziptest
 
 integrity:
@@ -8,17 +8,17 @@ integrity:
     type: "ZipTest"
   zomes:
     - name: ziptest_integrity
-      bundled: ../../../target/wasm32-unknown-unknown/release/ziptest_integrity.wasm
+      path: ../../../target/wasm32-unknown-unknown/release/ziptest_integrity.wasm
     - name: profiles_integrity
-      bundled: ../../../target/wasm32-unknown-unknown/release/profiles_integrity.wasm
+      path: ../../../target/wasm32-unknown-unknown/release/profiles_integrity.wasm
 
 coordinator:
   zomes:
     - name: ziptest
-      bundled: ../../../target/wasm32-unknown-unknown/release/ziptest.wasm
+      path: ../../../target/wasm32-unknown-unknown/release/ziptest.wasm
       dependencies:
         - name: ziptest_integrity
     - name: profiles
-      bundled: ../../../target/wasm32-unknown-unknown/release/profiles.wasm
+      path: ../../../target/wasm32-unknown-unknown/release/profiles.wasm
       dependencies:
         - name: profiles_integrity
