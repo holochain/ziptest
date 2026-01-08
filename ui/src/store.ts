@@ -197,7 +197,7 @@ export class ZipTestStore {
     }
 
     constructor(
-        public weaveClient : WeaveClient,
+        public weaveClient : WeaveClient | null,
         public profilesStore: ProfilesStore,
         protected clientIn: AppClient,
         protected roleName: RoleName,

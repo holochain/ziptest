@@ -22,3 +22,6 @@ coordinator:
       path: ../../../target/wasm32-unknown-unknown/release/profiles.wasm
       dependencies:
         - name: profiles_integrity
+    - name: dht_util
+      path: ../../../target/wasm32-unknown-unknown/release/dht_util.wasm
+      dependencies: []

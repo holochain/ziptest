@@ -25,3 +25,6 @@ path = "dnas/ziptest/zomes/coordinator/profiles"
 
 [workspace.dependencies.profiles_integrity]
 path = "dnas/ziptest/zomes/integrity/profiles"
+
+[workspace.dependencies.dht_util]
+path = "dnas/ziptest/zomes/coordinator/dht_util"

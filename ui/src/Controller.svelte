@@ -14,13 +14,12 @@
   import { HoloHashMap } from "@holochain-open-dev/utils/dist/holo-hash-map";
   import "@holochain-open-dev/profiles/dist/elements/agent-avatar.js";
   import AboutDialog from "./AboutDialog.svelte";
-  import { stringifyHrl } from "@theweave/api";
   import { Pane, Splitpanes } from 'svelte-splitpanes';
 
   export let roleName = "";
   export let client: AppClient;
   export let profilesStore: ProfilesStore;
-  export let weaveClient: WeaveClient;
+  export let weaveClient: WeaveClient | null;
 
   let aboutDialog;
 
