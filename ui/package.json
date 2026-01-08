@@ -7,7 +7,10 @@
     "build": "vite build",
     "build-check": "npm run check && vite build",
     "check": "svelte-check --tsconfig ./tsconfig.json",
-    "package": "rm -f dist.zip && npm run build && cd dist && bestzip ../dist.zip *"
+    "package": "rm -f dist.zip && npm run build && cd dist && bestzip ../dist.zip *",
+    "build:fishy": "vite build",
+    "serve": "python3 -m http.server 8081 -d dist",
+    "serve1": "python3 -m http.server 8091 -d dist"
   },
   "dependencies": {
     "@holochain-open-dev/elements": "^0.600.0",

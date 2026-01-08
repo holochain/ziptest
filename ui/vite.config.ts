@@ -5,6 +5,7 @@ import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: './', // Relative paths for static hosting
   plugins: [
     svelte(),
     viteStaticCopy({
@@ -27,5 +28,6 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(version), // Define a global constant
     __DNA_VERSION__: JSON.stringify(dnaVersion), // Define a global constant
+    __GATEWAY_URL__: JSON.stringify(process.env.GATEWAY_URL || 'http://localhost:8000'),
   },
 });

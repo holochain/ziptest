@@ -1,149 +1,69 @@
 <script lang="ts">
   import Controller from "./Controller.svelte";
-  import ControllerStream from "./ControllerStream.svelte";
-  import {
-    AppWebsocket,
-    AdminWebsocket,
-    type AppWebsocketConnectionOptions,
-  } from "@holochain/client";
+  import type { AppClient } from "@holochain/client";
   import "@shoelace-style/shoelace/dist/themes/light.css";
-  import {
-    WeaveClient,
-    isWeaveContext,
-    initializeHotReload,
-    type Hrl,
-    type WAL,
-  } from "@theweave/api";
   import "@holochain-open-dev/profiles/dist/elements/profiles-context.js";
   import "@holochain-open-dev/profiles/dist/elements/profile-prompt.js";
   import "@holochain-open-dev/profiles/dist/elements/create-profile.js";
   import { ProfilesClient, ProfilesStore } from "@holochain-open-dev/profiles";
   import LogoIcon from "./icons/LogoIcon.svelte";
-  import { appletServices } from "./we";
   import { setProfilesClient } from "./util";
+  import { FishyAppClient, waitForFishy } from "./fishy";
 
-  const appId = import.meta.env.VITE_APP_ID
-    ? import.meta.env.VITE_APP_ID
-    : "ziptest";
+  // Gateway URL from build-time environment variable
+  const GATEWAY_URL = __GATEWAY_URL__ || "http://localhost:8000";
   const roleName = "ziptest";
-  const appPort = import.meta.env.VITE_APP_PORT
-    ? import.meta.env.VITE_APP_PORT
-    : 8888;
-  const adminPort = import.meta.env.VITE_ADMIN_PORT;
-  const url = `ws://localhost:${appPort}`;
 
-  let client: AppWebsocket;
-  let weaveClient: WeaveClient;
+  let client: AppClient;
   let profilesStore: ProfilesStore | undefined = undefined;
 
   let connected = false;
-
-  let createView;
-  enum RenderType {
-    App,
-    Stream,
-  }
-
-  let renderType = RenderType.App;
-  let wal: WAL;
+  let error: string | null = null;
 
   initialize();
 
   async function initialize(): Promise<void> {
-    let profilesClient;
-    if ((import.meta as any).env.DEV) {
-      try {
-        await initializeHotReload();
-      } catch (e) {
-        console.warn(
-          "Could not initialize applet hot-reloading. This is only expected to work in a We context in dev mode."
-        );
+    try {
+      // Wait for Fishy extension to be ready
+      if (!window.holochain?.isFishy) {
+        console.log("Waiting for Fishy extension...");
+        await waitForFishy(10000);
       }
+
+      console.log("Fishy extension detected, connecting...");
+
+      // Connect via FishyAppClient
+      client = await FishyAppClient.connect(GATEWAY_URL);
+
+      console.log("Connected to Fishy, setting up profiles...");
+
+      // Create ProfilesClient using FishyAppClient (it implements AppClient)
+      const profilesClient = new ProfilesClient(client, roleName);
+      setProfilesClient(profilesClient);
+
+      profilesStore = new ProfilesStore(profilesClient);
+      connected = true;
+      console.log("Initialization complete");
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
+      console.error("Failed to initialize:", e);
     }
-    let tokenResp;
-    if (!isWeaveContext()) {
-      console.log("adminPort is", adminPort);
-      if (adminPort) {
-        const url = `ws://localhost:${adminPort}`;
-
-        const adminWebsocket = await AdminWebsocket.connect({
-          url: new URL(url),
-        });
-        tokenResp = await adminWebsocket.issueAppAuthenticationToken({
-          installed_app_id: appId,
-        });
-        const x = await adminWebsocket.listApps({});
-        console.log("apps", x);
-        const cellIds = await adminWebsocket.listCellIds();
-        console.log("CELL IDS", cellIds);
-        await adminWebsocket.authorizeSigningCredentials(cellIds[0]);
-      }
-      console.log("appPort and Id is", appPort, appId);
-      const params: AppWebsocketConnectionOptions = { url: new URL(url) };
-      if (tokenResp) params.token = tokenResp.token;
-      client = await AppWebsocket.connect(params);
-      profilesClient = new ProfilesClient(client, appId);
-    } else {
-      weaveClient = await WeaveClient.connect(appletServices);
-
-      switch (weaveClient.renderInfo.type) {
-        case "applet-view":
-          switch (weaveClient.renderInfo.view.type) {
-            case "main":
-              // here comes your rendering logic for the main view
-              break;
-            case "block":
-              switch (weaveClient.renderInfo.view.block) {
-                default:
-                  throw new Error(
-                    "Unknown applet-view block type:" +
-                      weaveClient.renderInfo.view.block
-                  );
-              }
-            case "asset":
-              if (!weaveClient.renderInfo.view.recordInfo) {
-                renderType = RenderType.Stream;
-                wal = weaveClient.renderInfo.view.wal;
-              } else {
-                throw new Error("ZipTest has no entries");
-              }
-              break;
-            case "creatable":
-              break;
-            default:
-              throw new Error("Unsupported applet-view type");
-          }
-          break;
-        case "cross-group-view":
-          switch (this.weaveClient.renderInfo.view.type) {
-            case "main":
-            // here comes your rendering logic for the cross-applet main view
-            //break;
-            case "block":
-            //
-            //break;
-            default:
-              throw new Error("Unknown cross-applet-view render type.");
-          }
-          break;
-        default:
-          throw new Error("Unknown render view type");
-      }
-
-      //@ts-ignore
-      client = weaveClient.renderInfo.appletClient;
-      //@ts-ignore
-      profilesClient = weaveClient.renderInfo.profilesClient;
-    }
-    setProfilesClient(profilesClient);
-    profilesStore = new ProfilesStore(profilesClient);
-    connected = true;
   }
+
   $: prof = profilesStore ? profilesStore.myProfile : undefined;
 </script>
 
 <svelte:head></svelte:head>
-{#if connected}
+{#if error}
+  <div class="error-container">
+    <h2>Connection Error</h2>
+    <p class="error-message">{error}</p>
+    <p class="error-help">
+      Make sure the Fishy browser extension is installed and the gateway is running at {GATEWAY_URL}.
+    </p>
+    <button on:click={() => window.location.reload()}>Retry</button>
+  </div>
+{:else if connected}
   <profiles-context store={profilesStore}>
     {#if $prof.status == "pending"}
       <div class="loading"><div class="loader"></div></div>
@@ -152,21 +72,15 @@
         <div class="welcome-text"><LogoIcon /></div>
         <create-profile on:profile-created={() => {}}></create-profile>
       </div>
-    {:else if renderType == RenderType.App}
-      <Controller {client} {weaveClient} {profilesStore} {roleName}
-      ></Controller>
-    {:else if renderType == RenderType.Stream}
-      <ControllerStream
-        streamId={wal.context}
-        {client}
-        {weaveClient}
-        {profilesStore}
-        {roleName}
-      ></ControllerStream>
+    {:else}
+      <Controller {client} weaveClient={null} {profilesStore} {roleName}></Controller>
     {/if}
   </profiles-context>
 {:else}
-  <div class="loading"><div class="loader"></div></div>
+  <div class="loading">
+    <div class="loader"></div>
+    <p>Connecting to Fishy extension...</p>
+  </div>
 {/if}
 
 <style>
@@ -193,9 +107,11 @@
     text-align: center;
     padding-top: 100px;
     display: flex;
+    flex-direction: column;
     margin-left: auto;
     margin-right: auto;
     align-items: center;
+    gap: 20px;
   }
   :global(.loader) {
     border: 8px solid #f3f3f3;
@@ -206,6 +122,42 @@
     -webkit-animation: spin 2s linear infinite; /* Safari */
     animation: spin 2s linear infinite;
     display: inline-block;
+  }
+  .error-container {
+    max-width: 500px;
+    margin: 100px auto;
+    padding: 30px;
+    text-align: center;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  .error-container h2 {
+    color: #d32f2f;
+    margin-bottom: 20px;
+  }
+  .error-message {
+    background: #ffebee;
+    padding: 15px;
+    border-radius: 4px;
+    color: #c62828;
+    margin-bottom: 20px;
+  }
+  .error-help {
+    color: #666;
+    margin-bottom: 20px;
+  }
+  .error-container button {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 30px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  .error-container button:hover {
+    background: #2980b9;
   }
   @-webkit-keyframes spin {
     0% {

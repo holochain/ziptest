@@ -16,7 +16,7 @@ import type { ProfilesStore } from '@holochain-open-dev/profiles';
 import { EntryRecord, LazyHoloHashMap, ZomeClient } from '@holochain-open-dev/utils';
 import { collectionStore, type AsyncReadable, latestVersionOfEntryStore, pipe, joinAsync, sliceAndJoin, asyncDerived, type Writable, writable, get, type Unsubscriber, type Readable } from '@holochain-open-dev/stores';
 import type { ActionCommittedSignal } from '@holochain-open-dev/utils';
-import { isWeaveContext, type WeaveClient } from '@theweave/api';
+import type { WeaveClient } from '@theweave/api';
 import { HoloHashMap } from '@holochain-open-dev/utils/dist/holo-hash-map';
 import { getMyDna } from './util';
 import type { UnsubscribeFunction } from 'emittery';
@@ -198,7 +198,7 @@ export class ZipTestStore {
     }
 
     constructor(
-        public weaveClient : WeaveClient,
+        public weaveClient : WeaveClient | null,
         public profilesStore: ProfilesStore,
         protected clientIn: AppClient,
         protected roleName: RoleName,
