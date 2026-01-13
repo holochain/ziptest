@@ -217,7 +217,9 @@ export class FishyAppClient implements AppClient {
       cap_secret: args.cap_secret,
     });
 
-    return result;
+    // Chrome messaging converts Uint8Array to plain arrays.
+    // We need to convert them back for @holochain/client compatibility.
+    return this.deepConvertByteArrays(result);
   }
 
   /**
@@ -325,6 +327,102 @@ export class FishyAppClient implements AppClient {
       return new Uint8Array(values);
     }
     return new Uint8Array();
+  }
+
+  /**
+   * Recursively convert byte arrays from Chrome messaging back to Uint8Array.
+   *
+   * Chrome messaging converts Uint8Array to plain arrays [n, n, n, ...].
+   * This function walks the result tree and converts arrays that look like
+   * byte data (all integers 0-255) back to Uint8Array.
+   *
+   * Heuristics to identify byte arrays:
+   * - Arrays where all elements are integers in 0-255 range
+   * - Arrays with Holochain hash prefix bytes (132, 32/33/41, 36)
+   * - Objects with numeric string keys (Chrome's Uint8Array conversion)
+   */
+  private deepConvertByteArrays(value: any): any {
+    if (value === null || value === undefined) {
+      return value;
+    }
+
+    // Already a Uint8Array
+    if (value instanceof Uint8Array) {
+      return value;
+    }
+
+    // Check for Chrome's object-with-numeric-keys conversion of Uint8Array
+    if (typeof value === 'object' && !Array.isArray(value)) {
+      const keys = Object.keys(value);
+
+      // Check if this looks like a converted Uint8Array: {"0": n, "1": n, ...}
+      if (keys.length > 0 && keys.every(k => /^\d+$/.test(k))) {
+        const nums = keys.map(k => parseInt(k, 10)).sort((a, b) => a - b);
+        // Check if keys are consecutive starting from 0
+        if (nums[0] === 0 && nums[nums.length - 1] === nums.length - 1) {
+          const values = nums.map(i => value[i.toString()]);
+          if (this.looksLikeByteArray(values)) {
+            return new Uint8Array(values);
+          }
+        }
+      }
+
+      // Regular object - recurse into properties
+      const result: Record<string, any> = {};
+      for (const key of Object.keys(value)) {
+        result[key] = this.deepConvertByteArrays(value[key]);
+      }
+      return result;
+    }
+
+    // Array - check if it's byte data or recurse
+    if (Array.isArray(value)) {
+      if (this.looksLikeByteArray(value)) {
+        return new Uint8Array(value);
+      }
+      // Not byte data - recurse into elements
+      return value.map(item => this.deepConvertByteArrays(item));
+    }
+
+    // Primitive value
+    return value;
+  }
+
+  /**
+   * Check if an array looks like byte data (Uint8Array that was converted to plain array).
+   *
+   * Returns true if:
+   * - Array has 39 elements with Holochain hash prefix (definitely a hash)
+   * - Array has >0 elements, all are integers 0-255, and has known hash prefix
+   */
+  private looksLikeByteArray(arr: any[]): boolean {
+    if (arr.length === 0) return false;
+
+    // Check all elements are bytes (integers 0-255)
+    const allBytes = arr.every(
+      v => typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= 255
+    );
+    if (!allBytes) return false;
+
+    // Check for Holochain hash prefix: [132, type_byte, 36, ...]
+    // type_byte: 32=Agent, 33=Entry, 41=Action, 36=DNA
+    if (arr.length === 39 && arr[0] === 132 && arr[2] === 36) {
+      const typeByte = arr[1];
+      if (typeByte === 32 || typeByte === 33 || typeByte === 41 || typeByte === 36) {
+        return true;
+      }
+    }
+
+    // For non-hash byte arrays (like entry content), be more conservative:
+    // Only convert if it's clearly binary data (length suggests it's not a small number array)
+    // Entry content is typically msgpack-encoded and longer than 39 bytes
+    if (arr.length > 39) {
+      return true;
+    }
+
+    // For shorter arrays without hash prefix, don't convert
+    // (could be legitimate array of small numbers like coordinates)
+    return false;
   }
 }
 
