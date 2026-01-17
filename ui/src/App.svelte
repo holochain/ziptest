@@ -5,10 +5,10 @@
   import "@holochain-open-dev/profiles/dist/elements/profiles-context.js";
   import "@holochain-open-dev/profiles/dist/elements/profile-prompt.js";
   import "@holochain-open-dev/profiles/dist/elements/create-profile.js";
-  import { ProfilesClient, ProfilesStore } from "@holochain-open-dev/profiles";
+  import { ProfilesStore } from "@holochain-open-dev/profiles";
   import LogoIcon from "./icons/LogoIcon.svelte";
   import { setProfilesClient } from "./util";
-  import { FishyAppClient, waitForFishy } from "./fishy";
+  import { FishyAppClient, waitForFishy, ZeroArcProfilesClient } from "./fishy";
 
   // Gateway URL from build-time environment variable
   const GATEWAY_URL = __GATEWAY_URL__ || "http://localhost:8000";
@@ -33,12 +33,16 @@
       console.log("Fishy extension detected, connecting...");
 
       // Connect via FishyAppClient
-      client = await FishyAppClient.connect(GATEWAY_URL);
+      client = await FishyAppClient.connect({
+        gatewayUrl: GATEWAY_URL,
+        roleName: roleName,
+      });
 
       console.log("Connected to Fishy, setting up profiles...");
 
-      // Create ProfilesClient using FishyAppClient (it implements AppClient)
-      const profilesClient = new ProfilesClient(client, roleName);
+      // Create ZeroArcProfilesClient for zero-arc nodes (always fetch from network)
+      // This overrides the default local-first behavior of ProfilesClient
+      const profilesClient = new ZeroArcProfilesClient(client, roleName);
       setProfilesClient(profilesClient);
 
       profilesStore = new ProfilesStore(profilesClient);

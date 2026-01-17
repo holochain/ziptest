@@ -1,7 +1,7 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <script lang="ts">
   import { ZipTestStore } from "./store";
-  import { setContext } from "svelte";
+  import { setContext, onDestroy } from "svelte";
   import type { AppClient } from "@holochain/client";
   import type { Profile, ProfilesStore } from "@holochain-open-dev/profiles";
   import SvgIcon from "./SvgIcon.svelte";
@@ -14,6 +14,7 @@
   import "@holochain-open-dev/profiles/dist/elements/agent-avatar.js";
   import AboutDialog from "./AboutDialog.svelte";
   import { Pane, Splitpanes } from 'svelte-splitpanes';
+  import { FishyAppClient, ConnectionStatus, type ConnectionState } from "./fishy";
 
   export let roleName = "";
   export let client: AppClient;
@@ -37,6 +38,43 @@
   setContext("store", {
     getStore: () => store,
   });
+
+  // Detect if using FishyAppClient (for conditional UI)
+  const isFishyClient = client instanceof FishyAppClient;
+
+  // Connection status tracking for FishyAppClient
+  let connectionState: ConnectionState | null = null;
+  let unsubscribeConnection: (() => void) | null = null;
+
+  if (isFishyClient) {
+    const fishyClient = client as FishyAppClient;
+    // Get initial state
+    connectionState = fishyClient.getConnectionState();
+    // Subscribe to changes
+    unsubscribeConnection = fishyClient.onConnection('connection:change', (state) => {
+      connectionState = { ...state }; // Create new reference for Svelte reactivity
+    });
+  }
+
+  onDestroy(() => {
+    if (unsubscribeConnection) {
+      unsubscribeConnection();
+    }
+  });
+
+  // Helper for gateway status color (based on httpHealthy, not connection status)
+  function getGatewayColor(state: ConnectionState | null): string {
+    if (!state) return '#9e9e9e'; // gray - unknown
+    if (state.httpHealthy) return '#4caf50'; // green - gateway reachable
+    return '#f44336'; // red - gateway unreachable
+  }
+
+  // Helper for gateway status text
+  function getGatewayText(state: ConnectionState | null): string {
+    if (!state) return 'Unknown';
+    if (state.httpHealthy) return 'Connected';
+    return 'Unreachable';
+  }
 
   let interval;
 
@@ -348,12 +386,26 @@
           </Pane>
           <Pane maxSize={networkStatsOpen ? 95 : 10} minSize={10} size={networkStatsOpen? 50 : 10}>
             <div class="stats {networkStatsOpen ? 'stats-polling' : ''}">
-          <span
-            class="pill-button"
-            style="width:fit-content"
-            on:click={() => toggleStats()}
-            >{#if !networkStatsOpen}Start{:else}Stop{/if} Stats Polling</span
-          >
+          {#if isFishyClient}
+            <!-- Fishy Connection Status - Two indicators: Extension + Gateway -->
+            <div class="connection-status-line">
+              <span class="status-indicator" style="background-color: #4caf50"></span>
+              <span>Extension: Active</span>
+              <span style="margin: 0 8px;">|</span>
+              <span class="status-indicator" style="background-color: {getGatewayColor(connectionState)}"></span>
+              <span>Gateway: {getGatewayText(connectionState)}</span>
+              {#if connectionState?.lastError && !connectionState.httpHealthy}
+                <span class="error-text">({connectionState.lastError})</span>
+              {/if}
+            </div>
+          {:else}
+            <!-- Standard Holochain Network Stats -->
+            <span
+              class="pill-button"
+              style="width:fit-content"
+              on:click={() => toggleStats()}
+              >{#if !networkStatsOpen}Start{:else}Stop{/if} Stats Polling</span
+            >
           {#if networkStats}
             <h3>{stats}</h3>
             <h4>Peer Urls: {networkStats.peer_urls.length}</h4>
@@ -461,7 +513,8 @@
                 </div>
               {/each}
             {/if}
-          {/if}          
+          {/if}
+          {/if}
           </div>
           </Pane>
         </Splitpanes>
@@ -683,5 +736,24 @@
   }
   .indent {
     padding-left: 10px;
+  }
+  /* Connection status styles for Fishy */
+  .connection-status-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+  }
+  .status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .status-health {
+    color: #666;
+  }
+  .error-text {
+    color: #f44336;
   }
 </style>
