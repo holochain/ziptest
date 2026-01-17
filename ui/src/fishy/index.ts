@@ -1,8 +1,21 @@
 /**
  * Fishy integration module for ziptest
  *
- * Provides FishyAppClient which implements @holochain/client's AppClient interface
- * using the Fishy browser extension's window.holochain API.
+ * Re-exports from @zippy/fishy-client package for compatibility.
+ * Also provides ZeroArcProfilesClient for zero-arc nodes that need to always
+ * fetch from network instead of using local-first strategy.
  */
 
-export { FishyAppClient, waitForFishy } from './FishyAppClient';
+// Re-export from the fishy-client package
+export {
+  FishyAppClient,
+  waitForFishy,
+  isFishyAvailable,
+  ConnectionStatus,
+  type ConnectionState,
+  type ConnectionConfig,
+  type FishyAppClientOptions,
+} from '@zippy/fishy-client';
+
+// Keep local ZeroArcProfilesClient (app-specific)
+export { ZeroArcProfilesClient } from './ZeroArcProfilesClient';
