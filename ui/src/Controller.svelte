@@ -411,13 +411,16 @@
           <Pane maxSize={networkStatsOpen ? 95 : 10} minSize={10} size={networkStatsOpen? 50 : 10}>
             <div class="stats {networkStatsOpen ? 'stats-polling' : ''}">
           {#if isFishyClient}
-            <!-- Fishy Connection Status - Two indicators: Extension + Gateway -->
+            <!-- Fishy Connection Status - Three indicators: Extension + Gateway HTTP + Gateway WS -->
             <div class="connection-status-line">
               <span class="status-indicator" style="background-color: #4caf50"></span>
               <span>Extension: Active</span>
               <span style="margin: 0 8px;">|</span>
               <span class="status-indicator" style="background-color: {getGatewayColor(connectionState)}"></span>
-              <span>Gateway: {getGatewayText(connectionState)}</span>
+              <span>HTTP: {getGatewayText(connectionState)}</span>
+              <span style="margin: 0 8px;">|</span>
+              <span class="status-indicator" style="background-color: {connectionState?.wsHealthy ? '#4caf50' : '#f44336'}"></span>
+              <span>WS: {connectionState?.wsHealthy ? 'Connected' : 'Disconnected'}</span>
               {#if connectionState?.lastError && !connectionState.httpHealthy}
                 <span class="error-text">({connectionState.lastError})</span>
               {/if}
