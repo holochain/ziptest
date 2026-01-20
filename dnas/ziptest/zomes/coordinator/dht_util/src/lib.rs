@@ -73,12 +73,17 @@ pub fn dht_get_details(input: GetRecordInput) -> ExternResult<Option<Details>> {
 pub struct GetLinksInput {
     /// Base address to get links from
     pub base: AnyLinkableHash,
-    /// Optional link type filter (as integer - zome index * 256 + link type index)
+    /// Optional link type filter (link type index within the zome)
     #[serde(default)]
     pub link_type: Option<u16>,
     /// Optional tag prefix filter
     #[serde(default)]
     pub tag_prefix: Option<Vec<u8>>,
+    /// Optional zome index for filtering links.
+    /// When provided with link_type, filters to specific link type from specific zome.
+    /// When provided without link_type, filters to all links from that zome.
+    #[serde(default)]
+    pub zome_index: Option<u8>,
 }
 
 /// Get links from a base address
@@ -86,25 +91,29 @@ pub struct GetLinksInput {
 /// This is a passthrough to the `get_links` host function.
 #[hdk_extern]
 pub fn dht_get_links(input: GetLinksInput) -> ExternResult<Vec<Link>> {
-    // Build the link query
-    let mut query_builder = LinkQuery::new(
-        input.base,
-        // For cross-zome queries, we use a special link type scope
-        LinkTypeFilter::Dependencies(vec![]),
-    );
+    // Build the link type filter based on zome_index and link_type parameters
+    let link_type_filter = match (input.zome_index, input.link_type) {
+        // Both zome_index and link_type provided: filter to specific link type from specific zome
+        (Some(zome_idx), Some(link_type)) => {
+            LinkTypeFilter::single_type(ZomeIndex(zome_idx), LinkType(link_type as u8))
+        }
+        // Only zome_index provided: filter to all links from that zome
+        (Some(zome_idx), None) => {
+            LinkTypeFilter::single_dep(ZomeIndex(zome_idx))
+        }
+        // Only link_type provided (legacy): decode zome_index from high byte
+        (None, Some(link_type)) => {
+            let zome_index = (link_type >> 8) as u8;
+            LinkTypeFilter::single_dep(ZomeIndex(zome_index))
+        }
+        // Neither provided: return links from all zomes
+        (None, None) => {
+            LinkTypeFilter::Dependencies(vec![])
+        }
+    };
 
-    // Add link type filter if provided
-    if let Some(link_type) = input.link_type {
-        let zome_index = (link_type >> 8) as u8;
-        let link_type_index = (link_type & 0xFF) as u8;
-        query_builder = LinkQuery::new(
-            query_builder.base.clone(),
-            LinkTypeFilter::single_dep(ZomeIndex(zome_index)),
-        );
-        // Note: Proper filtering by link type would require more complex setup
-        // For now we filter all links from the specified zome
-        let _ = link_type_index; // Suppress unused warning
-    }
+    // Build the link query
+    let mut query_builder = LinkQuery::new(input.base, link_type_filter);
 
     // Add tag prefix if provided
     if let Some(tag_prefix) = input.tag_prefix {
@@ -119,12 +128,15 @@ pub fn dht_get_links(input: GetLinksInput) -> ExternResult<Vec<Link>> {
 pub struct CountLinksInput {
     /// Base address to count links from
     pub base: AnyLinkableHash,
-    /// Optional link type filter
+    /// Optional link type filter (link type index within the zome)
     #[serde(default)]
     pub link_type: Option<u16>,
     /// Optional tag prefix filter
     #[serde(default)]
     pub tag_prefix: Option<Vec<u8>>,
+    /// Optional zome index for filtering links.
+    #[serde(default)]
+    pub zome_index: Option<u8>,
 }
 
 /// Count links from a base address
@@ -132,20 +144,29 @@ pub struct CountLinksInput {
 /// This is a passthrough to the `count_links` host function.
 #[hdk_extern]
 pub fn dht_count_links(input: CountLinksInput) -> ExternResult<usize> {
-    // Build the link query
-    let mut query_builder = LinkQuery::new(
-        input.base,
-        LinkTypeFilter::Dependencies(vec![]),
-    );
+    // Build the link type filter based on zome_index and link_type parameters
+    let link_type_filter = match (input.zome_index, input.link_type) {
+        // Both zome_index and link_type provided: filter to specific link type from specific zome
+        (Some(zome_idx), Some(link_type)) => {
+            LinkTypeFilter::single_type(ZomeIndex(zome_idx), LinkType(link_type as u8))
+        }
+        // Only zome_index provided: filter to all links from that zome
+        (Some(zome_idx), None) => {
+            LinkTypeFilter::single_dep(ZomeIndex(zome_idx))
+        }
+        // Only link_type provided (legacy): decode zome_index from high byte
+        (None, Some(link_type)) => {
+            let zome_index = (link_type >> 8) as u8;
+            LinkTypeFilter::single_dep(ZomeIndex(zome_index))
+        }
+        // Neither provided: return count from all zomes
+        (None, None) => {
+            LinkTypeFilter::Dependencies(vec![])
+        }
+    };
 
-    // Add link type filter if provided
-    if let Some(link_type) = input.link_type {
-        let zome_index = (link_type >> 8) as u8;
-        query_builder = LinkQuery::new(
-            query_builder.base.clone(),
-            LinkTypeFilter::single_dep(ZomeIndex(zome_index)),
-        );
-    }
+    // Build the link query
+    let mut query_builder = LinkQuery::new(input.base, link_type_filter);
 
     // Add tag prefix if provided
     if let Some(tag_prefix) = input.tag_prefix {
