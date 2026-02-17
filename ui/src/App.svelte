@@ -8,10 +8,10 @@
   import { ProfilesStore } from "@holochain-open-dev/profiles";
   import LogoIcon from "./icons/LogoIcon.svelte";
   import { setProfilesClient } from "./util";
-  import { FishyAppClient, waitForFishy, ZeroArcProfilesClient } from "./fishy";
+  import { WebConductorAppClient, waitForHolochain, ZeroArcProfilesClient } from "./fishy";
 
-  // Gateway URL from build-time environment variable
-  const GATEWAY_URL = __GATEWAY_URL__ || "http://localhost:8000";
+  // Linker URL from build-time environment variable
+  const LINKER_URL = __GATEWAY_URL__ || "http://localhost:8000";
   const roleName = "ziptest";
 
   let client: AppClient;
@@ -24,21 +24,21 @@
 
   async function initialize(): Promise<void> {
     try {
-      // Wait for Fishy extension to be ready
-      if (!window.holochain?.isFishy) {
-        console.log("Waiting for Fishy extension...");
-        await waitForFishy(10000);
+      // Wait for Holochain extension to be ready
+      if (!window.holochain?.isWebConductor) {
+        console.log("Waiting for Holochain extension...");
+        await waitForHolochain(10000);
       }
 
-      console.log("Fishy extension detected, connecting...");
+      console.log("Holochain extension detected, connecting...");
 
-      // Connect via FishyAppClient
-      client = await FishyAppClient.connect({
-        gatewayUrl: GATEWAY_URL,
+      // Connect via WebConductorAppClient
+      client = await WebConductorAppClient.connect({
+        linkerUrl: LINKER_URL,
         roleName: roleName,
       });
 
-      console.log("Connected to Fishy, setting up profiles...");
+      console.log("Connected to Holochain, setting up profiles...");
 
       // Create ZeroArcProfilesClient for zero-arc nodes (always fetch from network)
       // This overrides the default local-first behavior of ProfilesClient
@@ -63,7 +63,7 @@
     <h2>Connection Error</h2>
     <p class="error-message">{error}</p>
     <p class="error-help">
-      Make sure the Fishy browser extension is installed and the gateway is running at {GATEWAY_URL}.
+      Make sure the Holochain Web Conductor extension is installed and the linker is running at {LINKER_URL}.
     </p>
     <button on:click={() => window.location.reload()}>Retry</button>
   </div>
@@ -83,7 +83,7 @@
 {:else}
   <div class="loading">
     <div class="loader"></div>
-    <p>Connecting to Fishy extension...</p>
+    <p>Connecting to Holochain extension...</p>
   </div>
 {/if}
 

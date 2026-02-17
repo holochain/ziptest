@@ -13,39 +13,40 @@
     "serve1": "python3 -m http.server 8091 -d dist"
   },
   "dependencies": {
+    "@holo-host/web-conductor-client": "file:../../holo-web-conductor/packages/client",
     "@holochain-open-dev/elements": "^0.600.0",
     "@holochain-open-dev/profiles": "^0.600.0",
     "@holochain-open-dev/stores": "^0.600.0",
     "@holochain-open-dev/utils": "^0.600.0",
     "@holochain/client": "^0.20.0",
+    "@mdi/js": "^7.1.96",
+    "@neodrag/svelte": "2.0.6",
+    "@shoelace-style/shoelace": "^2.5.2",
     "@theweave/api": "^0.6.3",
     "@theweave/elements": "^0.6.1",
-    "@mdi/js": "^7.1.96",
     "@ts-stack/markdown": "^1.4.0",
-    "lodash": "^4.17.21",
-    "svelte-multiselect": "^8.2.0",
-    "uuid": "^8.3.2",
-    "svelte-dnd-list": "0.1.8",
-    "sanitize-filename": "1.6.3",
-    "@shoelace-style/shoelace": "^2.5.2",
-    "svelte-awesome-color-picker": "2.4.6",
+    "@types/javascript-time-ago": "^2.0.3",
     "emoji-picker-element": "1.21.0",
     "javascript-time-ago": "2.3.7",
-    "@types/javascript-time-ago": "^2.0.3",
-    "@neodrag/svelte": "2.0.6",
+    "lodash": "^4.17.21",
+    "sanitize-filename": "1.6.3",
+    "svelte-awesome-color-picker": "2.4.6",
+    "svelte-dnd-list": "0.1.8",
     "svelte-moveable": "0.45.0",
-    "svelte-splitpanes": "0.7.15"
+    "svelte-multiselect": "^8.2.0",
+    "svelte-splitpanes": "0.7.15",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^2.0.2",
-    "vite-plugin-static-copy": "0.16.0",
     "@tsconfig/svelte": "^3.0.0",
     "bestzip": "^2.2.0",
     "svelte": "^3.55.1",
     "svelte-check": "^2.10.3",
     "tslib": "^2.4.1",
     "typescript": "^4.9.3",
-    "vite": "^4.0.4"
+    "vite": "^4.0.4",
+    "vite-plugin-static-copy": "0.16.0"
   },
   "type": "module"
 }

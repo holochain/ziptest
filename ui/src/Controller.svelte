@@ -14,7 +14,7 @@
   import "@holochain-open-dev/profiles/dist/elements/agent-avatar.js";
   import AboutDialog from "./AboutDialog.svelte";
   import { Pane, Splitpanes } from 'svelte-splitpanes';
-  import { FishyAppClient, ConnectionStatus, type ConnectionState } from "./fishy";
+  import { WebConductorAppClient, ConnectionStatus, type ConnectionState } from "./fishy";
 
   export let roleName = "";
   export let client: AppClient;
@@ -39,19 +39,19 @@
     getStore: () => store,
   });
 
-  // Detect if using FishyAppClient (for conditional UI)
-  const isFishyClient = client instanceof FishyAppClient;
+  // Detect if using WebConductorAppClient (for conditional UI)
+  const isHwcClient = client instanceof WebConductorAppClient;
 
-  // Connection status tracking for FishyAppClient
+  // Connection status tracking for WebConductorAppClient
   let connectionState: ConnectionState | null = null;
   let unsubscribeConnection: (() => void) | null = null;
 
-  if (isFishyClient) {
-    const fishyClient = client as FishyAppClient;
+  if (isHwcClient) {
+    const hwcClient = client as WebConductorAppClient;
     // Get initial state
-    connectionState = fishyClient.getConnectionState();
+    connectionState = hwcClient.getConnectionState();
     // Subscribe to changes
-    unsubscribeConnection = fishyClient.onConnection('connection:change', (state) => {
+    unsubscribeConnection = hwcClient.onConnection('connection:change', (state) => {
       connectionState = { ...state }; // Create new reference for Svelte reactivity
     });
   }
@@ -386,8 +386,8 @@
           </Pane>
           <Pane maxSize={networkStatsOpen ? 95 : 10} minSize={10} size={networkStatsOpen? 50 : 10}>
             <div class="stats {networkStatsOpen ? 'stats-polling' : ''}">
-          {#if isFishyClient}
-            <!-- Fishy Connection Status - Three indicators: Extension + Gateway HTTP + Gateway WS -->
+          {#if isHwcClient}
+            <!-- HWC Connection Status - Three indicators: Extension + Linker HTTP + Linker WS -->
             <div class="connection-status-line">
               <span class="status-indicator" style="background-color: #4caf50"></span>
               <span>Extension: Active</span>
