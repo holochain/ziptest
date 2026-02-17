@@ -15,7 +15,7 @@
   import "@holochain-open-dev/profiles/dist/elements/agent-avatar.js";
   import AboutDialog from "./AboutDialog.svelte";
   import { Pane, Splitpanes } from 'svelte-splitpanes';
-  import { WebConductorAppClient, ConnectionStatus, type ConnectionState } from "./fishy";
+  import { WebConductorAppClient, ConnectionStatus, type ConnectionState } from "./hwc";
 
   export let roleName = "";
   export let client: AppClient;
@@ -781,7 +781,7 @@
   .indent {
     padding-left: 10px;
   }
-  /* Connection status styles for Fishy */
+  /* Connection status styles for HWC */
   .connection-status-line {
     display: flex;
     align-items: center;

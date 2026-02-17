@@ -8,10 +8,10 @@
   import { ProfilesStore } from "@holochain-open-dev/profiles";
   import LogoIcon from "./icons/LogoIcon.svelte";
   import { setProfilesClient } from "./util";
-  import { WebConductorAppClient, waitForHolochain, ZeroArcProfilesClient } from "./fishy";
+  import { WebConductorAppClient, waitForHolochain, ZeroArcProfilesClient } from "./hwc";
 
   // Linker URL from build-time environment variable
-  const LINKER_URL = __GATEWAY_URL__ || "http://localhost:8000";
+  const LINKER_URL = __LINKER_URL__ || "http://localhost:8000";
   const roleName = "ziptest";
 
   let client: AppClient;
