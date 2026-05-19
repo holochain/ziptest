@@ -22,7 +22,7 @@
         <p> <b>Developers:</b>
             Check out this hApp's source-code <a href="https://github.com/lightningrodlabs/ziptest">in our github repo</a>.
         </p>
-    <p class="small">Copyright © 2024-2025 Lightningrod Labs & Holochain Foundation.  This software is distributed under the MIT License</p>
+    <p class="small">Copyright © 2024-2026 Lightningrod Labs & Holochain Foundation.  This software is distributed under the MIT License</p>
     </div>
 </sl-dialog>
 
