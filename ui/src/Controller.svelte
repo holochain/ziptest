@@ -1,7 +1,7 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <script lang="ts">
   import { ZipTestStore } from "./store";
-  import { setContext } from "svelte";
+  import { setContext, onMount, onDestroy } from "svelte";
   import type { AppClient } from "@holochain/client";
   import type { Profile, ProfilesStore } from "@holochain-open-dev/profiles";
   import SvgIcon from "./SvgIcon.svelte";
@@ -10,7 +10,8 @@
   import type { WeaveClient } from "@theweave/api";
   import { decodeHashFromBase64, encodeHashToBase64 } from "@holochain/client";
   import type { AgentPubKey } from "@holochain/client";
-  import { EntryRecord, HoloHashMap } from "@holochain-open-dev/utils";
+  import type { EntryRecord } from "@holochain-open-dev/utils";
+  import { HoloHashMap } from "@holochain-open-dev/utils/dist/holo-hash-map";
   import "@holochain-open-dev/profiles/dist/elements/agent-avatar.js";
   import AboutDialog from "./AboutDialog.svelte";
   import { stringifyHrl } from "@theweave/api";
@@ -92,30 +93,53 @@
 
   const getNetworkStats = async () => {
     stats = "Polled at: " + new Date().toLocaleTimeString();
-    networkStats = await client.dumpNetworkStats();
+    // In holochain 0.7 dump_network_stats returns ApiTransportStats
+    // ({ transport_stats, blocked_message_counts }); unwrap to the inner
+    // TransportStats which carries peer_urls/connections.
+    const rawStats: any = await client.dumpNetworkStats();
+    networkStats = rawStats.transport_stats ?? rawStats;
     networkMetrics = await client.dumpNetworkMetrics({
       include_dht_summary: true,
     });
   };
   let networkStatsOpen = false;
+  // The button only opens/closes the pane; polling runs continuously.
   const toggleStats = () => {
-    if (statsInterval) {
-      clearInterval(statsInterval);
-      statsInterval = undefined;
-      stats = "";
-      networkStats = undefined;
-      networkStatsOpen = false
-    } else {
-      networkStatsOpen = true
-      getNetworkStats();
-
-      statsInterval = setInterval(async () => {
-        await getNetworkStats();
-      }, 5000);
-    }
+    networkStatsOpen = !networkStatsOpen;
   };
   let stats = "";
   let statsInterval;
+
+  // A DHT storage arc covers the full u32 location space when it spans
+  // [0, 4294967295]; that means the agent is a full-sync (full-arc) node.
+  const FULL_ARC_END = 4294967295;
+  const isFullArc = (arc: any) =>
+    Array.isArray(arc) && arc[0] === 0 && arc[1] === FULL_ARC_END;
+  const arcInfo = (arc: any) => {
+    if (!arc) return "empty (zero-arc)";
+    if (isFullArc(arc)) return "FULL";
+    return `[${arc[0]}, ${arc[1]}]`;
+  };
+  const computeArcStatus = (metrics: any) => {
+    if (!metrics) return "—";
+    const arcs = [];
+    for (const m of Object.values(metrics))
+      for (const a of m.local_agents ?? []) arcs.push(a.storage_arc);
+    if (arcs.length === 0) return "—";
+    if (arcs.every(isFullArc)) return "full arc";
+    if (arcs.every((a) => !a)) return "zero arc";
+    return "partial arc";
+  };
+  $: connectionCount = networkStats?.connections?.length ?? 0;
+  $: arcStatus = computeArcStatus(networkMetrics);
+
+  onMount(() => {
+    getNetworkStats();
+    statsInterval = setInterval(() => getNetworkStats(), 5000);
+  });
+  onDestroy(() => {
+    if (statsInterval) clearInterval(statsInterval);
+  });
   const hashToStr = (hash) => {
     if (!hash || Object.keys(hash).length == 0) {
       return "";
@@ -150,7 +174,7 @@
         </div>
 
 
-        <Splitpanes horizontal={true} style="height:100%;">
+        <Splitpanes horizontal={true} style="flex:1; min-height:0;">
           <Pane>
             <div class="main-pane {networkStatsOpen ? 'main-pane-polling' : ''}">
               {#if currentStream != "_"}
@@ -349,14 +373,22 @@
           </Pane>
           <Pane maxSize={networkStatsOpen ? 95 : 10} minSize={10} size={networkStatsOpen? 50 : 10}>
             <div class="stats {networkStatsOpen ? 'stats-polling' : ''}">
-          <span
-            class="pill-button"
-            style="width:fit-content"
-            on:click={() => toggleStats()}
-            >{#if !networkStatsOpen}Start{:else}Stop{/if} Stats Polling</span
-          >
-          {#if networkStats}
+          <div class="stats-summary">
+            <span
+              class="pill-button"
+              style="width:fit-content"
+              on:click={() => toggleStats()}
+              >{#if !networkStatsOpen}Open{:else}Close{/if} Stats</span
+            >
+            {#if networkStats}
+              <span>Connections: {connectionCount} | Arc: {arcStatus}</span>
+            {:else}
+              <span>Connecting…</span>
+            {/if}
+          </div>
+          {#if networkStatsOpen && networkStats}
             <h3>{stats}</h3>
+            <h4>Backend: {networkStats.backend}</h4>
             <h4>Peer Urls: {networkStats.peer_urls.length}</h4>
             {#each networkStats.peer_urls as url}
               <li>{url}</li>
@@ -364,7 +396,7 @@
             <h4>Connections: {networkStats.connections.length}</h4>
             {#each networkStats.connections as connection}
               <div class="stats-item">
-                <div>webrtc: {connection.is_webrtc}</div>
+                <div>direct: {connection.is_direct}</div>
                 <div>pub_key: {connection.pub_key}</div>
                 <div>opened_at: {prettyDateTime(new Date(connection.opened_at_s*1000))}</div>
                 <div>
@@ -449,14 +481,17 @@
                             peer.completed_rounds
                           )}; timeouts: {JSON.stringify(peer.peer_timeouts)}
                         </div>
-                      </div>horizontal={true}
+                      </div>
                     {/each}
                   </div>
                   <h5>local agents</h5>
                   {#each m.local_agents as agent}
                     <div class="indent">
-                      <b>{hashToStr(agent.agent)}</b> storage_arc: {agent.storage_arc}; target_arc:
-                      {agent.target_arc}
+                      <b>{hashToStr(agent.agent)}</b>
+                      storage_arc: {arcInfo(agent.storage_arc)}; target_arc: {arcInfo(
+                        agent.target_arc
+                      )}
+                      {#if isFullArc(agent.storage_arc)}(full arc){/if}
                     </div>
                   {/each}
                 </div>
@@ -665,9 +700,15 @@
   .stats {
     border-top: solid 1px black;
     padding: 10px;
-    overflow: auto;
+    overflow-y: auto;
     background-color: white;
     height: 100%;
+    box-sizing: border-box;
+  }
+  .stats-summary {
+    display: flex;
+    gap: 10px;
+    align-items: center;
   }
   .stats-polling {
     background-color: white;

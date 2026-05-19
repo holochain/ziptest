@@ -25,18 +25,11 @@ export const appletServices: AppletServices = {
   },
   // Types of UI widgets/blocks that this Applet supports
   blockTypes: {},
-  bindAsset: async (
-    appletClient: AppClient,
-    srcWal: WAL,
-    dstWal: WAL
-  ): Promise<void> => {
-    console.log("Bind requested.  Src:", srcWal, "  Dst:", dstWal);
-  },
 
   getAssetInfo: async (
     appletClient: AppClient,
     wal: WAL,
-    recordInfo: RecordInfo
+    recordInfo?: RecordInfo
   ): Promise<AssetInfo | undefined> => {
     if (!recordInfo) {
       let name = "Everybody";

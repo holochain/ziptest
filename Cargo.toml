@@ -9,10 +9,10 @@ members = ["dnas/*/zomes/coordinator/*", "dnas/*/zomes/integrity/*"]
 resolver = "1"
 
 [workspace.dependencies]
-hdi = "0.7.0"
-hdk = "0.6.0"
+hdi = "0.8.0-dev.12"
+hdk = "0.7.0-dev.17"
 serde = "1"
-holochain_serialized_bytes = "0.0.56"
+holochain_serialized_bytes = "0.0.57"
 
 [workspace.dependencies.ziptest]
 path = "dnas/ziptest/zomes/coordinator/ziptest"

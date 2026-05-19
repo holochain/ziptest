@@ -1,4 +1,5 @@
-import { LazyHoloHashMap, type EntryRecord } from "@holochain-open-dev/utils";
+import type { EntryRecord } from "@holochain-open-dev/utils";
+import { LazyHoloHashMap } from "@holochain-open-dev/utils/dist/holo-hash-map";
 import type { ActionHash, Link } from "@holochain/client";
 import type { ZipTestClient } from "./store";
 import {

@@ -14,7 +14,7 @@
   import { encodeHashToBase64 } from "@holochain/client";
   import type { Stream, Payload, Message } from "./stream";
   import type { AgentPubKey } from "@holochain/client";
-  import type { HoloHashMap } from "@holochain-open-dev/utils";
+  import type { HoloHashMap } from "@holochain-open-dev/utils/dist/holo-hash-map";
   import { hashEqual } from "./util";
 
   const { getStore }: any = getContext("store");

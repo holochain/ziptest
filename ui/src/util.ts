@@ -1,5 +1,5 @@
 import type { ProfilesClient } from "@holochain-open-dev/profiles";
-import { type AppClient, type EntryHash, type DnaHash, CellType, type ProvisionedCell } from "@holochain/client";
+import type { AppClient, EntryHash, DnaHash, ProvisionedCell } from "@holochain/client";
 import { readable } from "svelte/store";
 
 // @ts-ignore because this is magic maid available in the vite.config.ts and I don't
