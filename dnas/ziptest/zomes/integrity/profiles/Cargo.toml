@@ -2,12 +2,12 @@
 authors = ["guillem.cordoba@gmail.com"]
 edition = "2018"
 name = "profiles_integrity"
-version = "0.2.0-dev.0"
+version = "0.3.0-dev.0"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 name = "profiles_integrity"
 
 [dependencies]
-hc_zome_profiles_integrity = { git = "https://github.com/holochain-open-dev/profiles", branch = "main-0.7" }
+hc_zome_profiles_integrity = { git = "https://github.com/holochain-open-dev/profiles", tag = "v0.700.0" }
 holochain_serialized_bytes = { workspace = true }
