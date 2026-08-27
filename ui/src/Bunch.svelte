@@ -113,7 +113,7 @@
         <div>
           Reps: {bunchContent.reps}; Count: {bunchContent.count}; Delay: {bunchContent.delay}
         </div>
-        {#if hashEqual(bunchRecord.action.author, store.myAgentPubKey)}
+        {#if hashEqual(bunchRecord.action.header.author, store.myAgentPubKey)}
           <sl-button
             on:click={() => {
               creatingThings = true;
